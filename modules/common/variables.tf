@@ -1,0 +1,200 @@
+variable "hostname" {
+  type        = string
+  description = "Hostname"
+  default     = ""
+  nullable    = false
+}
+
+variable "ssh_authorized_key" {
+  type        = string
+  description = "Authorized ssh key for core user"
+  default     = ""
+  nullable    = false
+}
+
+variable "nameservers" {
+  type        = list(string)
+  description = "List of nameservers for VMs"
+  default     = []
+  nullable    = false
+}
+
+variable "grub_password_hash" {
+  type        = string
+  description = "grub2-mkpasswd-pbkdf2 password hash for GRUB"
+  default     = ""
+  nullable    = false
+}
+
+variable "timezone" {
+  type        = string
+  description = "Timezone for VMs as listed by `timedatectl list-timezones`"
+  default     = ""
+  nullable    = false
+}
+
+variable "systemd_pager" {
+  type        = string
+  description = "Systemd pager"
+  default     = ""
+  nullable    = false
+}
+
+variable "do_not_countme" {
+  type        = bool
+  description = "Disable Fedora CoreOS infrastructure count me feature"
+  default     = true
+  nullable    = false
+}
+
+variable "rollout_wariness" {
+  type        = string
+  description = "Wariness to update, 1.0 (very cautious) to 0.0 (very eager)"
+  default     = ""
+  nullable    = false
+}
+
+variable "updates_periodic_window" {
+  type = object({
+    days           = list(string)
+    start_time     = string
+    length_minutes = string
+  })
+  description = <<-TEMPLATE
+    Only reboot for updates during certain timeframes
+    {
+      days           = ["Sat", "Sun"],
+      start_time     = "22:30",
+      length_minutes = "60"
+    }
+  TEMPLATE
+  default     = null
+}
+
+variable "cidr_ip_address" {
+  type        = string
+  description = "CIDR IP Address. Ex: 192.168.1.101/24"
+  validation {
+    condition     = can(cidrhost(var.cidr_ip_address, 1))
+    error_message = "Check cidr_ip_address format"
+  }
+  default = null
+}
+
+variable "interface_name" {
+  type        = string
+  description = "Network interface name"
+  default     = "ens3"
+  nullable    = false
+}
+
+variable "keymap" {
+  type        = string
+  description = "Keymap"
+  default     = ""
+  nullable    = false
+}
+
+variable "sync_time_with_host" {
+  type        = bool
+  description = "Sync guest time with the kvm host"
+  default     = false
+  nullable    = false
+}
+
+variable "etc_hosts" {
+  type = list(
+    object(
+      {
+        ip       = string
+        hostname = string
+        fqdn     = string
+      }
+    )
+  )
+  description = "/etc/host list"
+  default     = []
+  nullable    = false
+}
+
+variable "etc_hosts_extra" {
+  type        = string
+  description = "/etc/host extra block"
+  default     = ""
+  nullable    = false
+}
+
+variable "disks" {
+  type = list(
+    object(
+      {
+        device     = string
+        wipe_table = optional(bool, false)
+        partitions = optional(
+          list(
+            object(
+              {
+                resize               = optional(bool)
+                label                = optional(string)
+                number               = optional(number)
+                size_mib             = optional(number)
+                start_mib            = optional(number)
+                type_guid            = optional(string)
+                guid                 = optional(string)
+                wipe_partition_entry = optional(bool)
+                should_exist         = optional(bool, true)
+              }
+            )
+          )
+        )
+      }
+    )
+  )
+  description = "Disks list"
+  default     = []
+  nullable    = false
+}
+
+variable "filesystems" {
+  type = list(
+    object(
+      {
+        device          = string
+        path            = string
+        format          = string
+        with_mount_unit = optional(bool)
+        wipe_filesystem = optional(bool)
+        label           = optional(string)
+        uuid            = optional(string)
+        options         = optional(string)
+        mount_options   = optional(list(string))
+      }
+    )
+  )
+  description = "Filesystems list"
+  default     = []
+  nullable    = false
+  validation {
+    condition = alltrue([
+      for filesystem in var.filesystems : can(regex("^/var/.+$", filesystem.path))
+    ])
+    error_message = "Mount path should be inside `/var` [Link](https://docs.fedoraproject.org/en-US/fedora-coreos/storage/#_configuration_in_etc_and_state_in_var)"
+  }
+}
+
+variable "additional_rpms" {
+  type = object(
+    {
+      cmd_pre  = optional(list(string), [])
+      list     = optional(list(string), [])
+      cmd_post = optional(list(string), [])
+    }
+  )
+  description = "Additional rpms to install during boot using rpm-ostree, along with any pre or post command"
+  default = {
+    cmd_pre  = []
+    list     = []
+    cmd_post = []
+  }
+  nullable = false
+}
