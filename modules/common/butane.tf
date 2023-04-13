@@ -125,9 +125,12 @@ storage:
       overwrite: false
       append:
         - inline: |
+            %{~if length(var.etc_hosts) > 0~}
+            # hosts
             %{~for host in var.etc_hosts~}
             %{if host.ip == split("/", var.cidr_ip_address)[0]}127.0.0.1%{else}${host.ip}%{endif} ${host.hostname} ${host.fqdn}
             %{~endfor~}
+            %{~endif~}
             %{~if var.etc_hosts_extra != ""~}
             # extra hosts
             ${var.etc_hosts_extra}
