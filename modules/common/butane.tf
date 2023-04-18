@@ -1,4 +1,4 @@
-data "template_file" "ign_snippet_hostname" {
+data "template_file" "butane_snippet_hostname" {
   count = var.hostname != "" ? 1 : 0
 
   template = <<-TEMPLATE
@@ -14,7 +14,7 @@ data "template_file" "ign_snippet_hostname" {
   TEMPLATE
 }
 
-data "template_file" "ign_snippet_keymap" {
+data "template_file" "butane_snippet_keymap" {
   count = var.keymap != "" ? 1 : 0
 
   template = <<-TEMPLATE
@@ -30,7 +30,7 @@ data "template_file" "ign_snippet_keymap" {
   TEMPLATE
 }
 
-data "template_file" "ign_snippet_updates_periodic_window" {
+data "template_file" "butane_snippet_updates_periodic_window" {
   count = var.updates_periodic_window == null ? 0 : 1
 
   template = <<-TEMPLATE
@@ -51,7 +51,7 @@ data "template_file" "ign_snippet_updates_periodic_window" {
   TEMPLATE
 }
 
-data "template_file" "ign_snippet_rollout_wariness" {
+data "template_file" "butane_snippet_rollout_wariness" {
   count = var.rollout_wariness != "" ? 1 : 0
 
   template = <<-TEMPLATE
@@ -68,7 +68,7 @@ data "template_file" "ign_snippet_rollout_wariness" {
   TEMPLATE
 }
 
-data "template_file" "ign_snippet_timezone" {
+data "template_file" "butane_snippet_timezone" {
   count = var.timezone != "" ? 1 : 0
 
   template = <<-TEMPLATE
@@ -82,7 +82,7 @@ data "template_file" "ign_snippet_timezone" {
   TEMPLATE
 }
 
-data "template_file" "ign_snippet_grub_password_hash" {
+data "template_file" "butane_snippet_grub_password_hash" {
   count = var.grub_password_hash != "" ? 1 : 0
 
   template = <<-TEMPLATE
@@ -97,7 +97,7 @@ data "template_file" "ign_snippet_grub_password_hash" {
   TEMPLATE
 }
 
-data "template_file" "ign_snippet_do_not_countme" {
+data "template_file" "butane_snippet_do_not_countme" {
   count = var.do_not_countme ? 1 : 0
 
   template = <<-TEMPLATE
@@ -112,7 +112,7 @@ data "template_file" "ign_snippet_do_not_countme" {
   TEMPLATE
 }
 
-data "template_file" "ign_snippet_etc_hosts" {
+data "template_file" "butane_snippet_etc_hosts" {
   count = length(var.etc_hosts) > 0 || var.etc_hosts_extra != "" ? 1 : 0
 
   template = <<TEMPLATE
@@ -128,7 +128,7 @@ storage:
             %{~if length(var.etc_hosts) > 0~}
             # hosts
             %{~for host in var.etc_hosts~}
-            %{if host.ip == split("/", var.cidr_ip_address)[0]}127.0.0.1%{else}${host.ip}%{endif} ${host.hostname} ${host.fqdn}
+            %{if host.ip == split("/", var.cidr_ip_address)[0]}127.0.0.1%{else}${host.ip}%{endif}%{if host.hostname != ""} ${host.hostname}%{endif} ${host.hostname} ${host.fqdn}
             %{~endfor~}
             %{~endif~}
             %{~if var.etc_hosts_extra != ""~}
@@ -138,7 +138,7 @@ storage:
 TEMPLATE
 }
 
-data "template_file" "ign_snippet_core_authorized_key" {
+data "template_file" "butane_snippet_core_authorized_key" {
   count = var.ssh_authorized_key != "" ? 1 : 0
 
   template = <<-TEMPLATE
@@ -153,7 +153,7 @@ data "template_file" "ign_snippet_core_authorized_key" {
   TEMPLATE
 }
 
-data "template_file" "ign_snippet_static_interface" {
+data "template_file" "butane_snippet_static_interface" {
   count = var.cidr_ip_address != null ? 1 : 0
 
   template = <<TEMPLATE
@@ -192,7 +192,7 @@ storage:
 TEMPLATE
 }
 
-data "template_file" "ign_snippet_disks" {
+data "template_file" "butane_snippet_disks" {
   count = length(var.disks) > 0 ? 1 : 0
 
   template = <<TEMPLATE
@@ -240,7 +240,7 @@ storage:
 TEMPLATE
 }
 
-data "template_file" "ign_snippet_filesystems" {
+data "template_file" "butane_snippet_filesystems" {
   count = length(var.filesystems) > 0 ? 1 : 0
 
   template = <<TEMPLATE
@@ -280,7 +280,7 @@ storage:
 TEMPLATE
 }
 
-data "template_file" "ign_snippet_additional_rpms" {
+data "template_file" "butane_snippet_additional_rpms" {
   count = length(var.additional_rpms) > 0 ? 1 : 0
 
   template = <<TEMPLATE
@@ -315,7 +315,7 @@ systemd:
 TEMPLATE
 }
 
-data "template_file" "ign_snippet_sync_time_with_host" {
+data "template_file" "butane_snippet_sync_time_with_host" {
   count = var.sync_time_with_host ? 1 : 0
 
   template = <<-TEMPLATE
@@ -336,7 +336,7 @@ data "template_file" "ign_snippet_sync_time_with_host" {
   TEMPLATE
 }
 
-data "template_file" "ign_snippet_systemd_pager" {
+data "template_file" "butane_snippet_systemd_pager" {
   count = var.systemd_pager != "" ? 1 : 0
 
   template = <<-TEMPLATE
