@@ -7,6 +7,12 @@ variant: fcos
 version: 1.4.0
 storage:
   files:
+    # pkg dependencies to be installed by os-additional-rpms.service
+    - path: /var/lib/os-additional-rpms.list
+      overwrite: false
+      append:
+        - inline: |
+            k3s-selinux
     - path: /usr/local/bin/k3s-installer.sh
       mode: 0754
       overwrite: true
@@ -105,7 +111,6 @@ systemd:
         %{~for envvar in var.config.envvars~}
         Environment="${envvar}"
         %{~endfor~}
-        ExecStartPre=/usr/bin/rpm-ostree install --idempotent --apply-live -y k3s-selinux
         %{~if contains(["server", "agent"], var.mode)~}
         ExecStartPre=/usr/local/bin/k3s-installer-wait-bootstrap-server.sh
         %{~endif~}
