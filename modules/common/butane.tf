@@ -287,6 +287,17 @@ data "template_file" "butane_snippet_additional_rpms" {
 ---
 variant: fcos
 version: 1.4.0
+storage:
+  files:
+    # pkg dependencies to be installed by os-additional-rpms.service
+    - path: /var/lib/os-additional-rpms.list
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          %{~for additional_rpm in var.additional_rpms.list~}
+          ${additional_rpm}
+          %{~endfor~}
 systemd:
   units:
     - name: os-additional-rpms.service
@@ -305,11 +316,11 @@ systemd:
         %{~for cmd_pre in var.additional_rpms.cmd_pre~}
         ExecStartPre=${cmd_pre}
         %{~endfor~}
-        ExecStart=/usr/bin/rpm-ostree install --idempotent --apply-live -y --allow-inactive ${join(" ", var.additional_rpms.list)}
+        ExecStart=/usr/bin/rpm-ostree install --idempotent --reboot --assumeyes --allow-inactive $(</var/lib/os-additional-rpms.list)
+        ExecStart=/bin/touch /var/lib/%N.done
         %{~for cmd_post in var.additional_rpms.cmd_post~}
         ExecStartPost=${cmd_post}
         %{~endfor~}
-        ExecStart=/bin/touch /var/lib/%N.done
         [Install]
         WantedBy=multi-user.target
 TEMPLATE

@@ -115,7 +115,7 @@ systemd:
 %{~if contains(["agent", "server"], var.mode)} --server ${var.origin_server}%{endif}
 %{~if var.config.selinux} --selinux%{endif}
 %{~if true} --data-dir ${var.config.data_dir} ${join(" ", var.config.parameters)}%{endif}
-        ExecStartPost=/bin/touch /var/lib/%N.done
+        ExecStart=/bin/touch /var/lib/%N.done
 
         [Install]
         WantedBy=multi-user.target
