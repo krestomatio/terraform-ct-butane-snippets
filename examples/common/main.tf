@@ -20,10 +20,20 @@ locals {
       fqdn     = "server-01.example.com"
     }
   ]
-  updates_periodic_window = {
-    days           = ["Sun"]
-    start_time     = "00:00"
-    length_minutes = "60"
+  periodic_updates = {
+    time_zone = "localtime"
+    windows = [
+      {
+        days           = ["Sat"],
+        start_time     = "23:30",
+        length_minutes = "60"
+      },
+      {
+        days           = ["Sun"],
+        start_time     = "00:30",
+        length_minutes = "60"
+      }
+    ]
   }
   disks = [
     {
@@ -55,21 +65,21 @@ locals {
 module "butane_common_snippets" {
   source = "../../modules/common"
 
-  hostname                = local.hostname
-  ssh_authorized_key      = local.ssh_authorized_key
-  nameservers             = local.nameservers
-  timezone                = local.timezone
-  keymap                  = local.keymap
-  rollout_wariness        = local.rollout_wariness
-  cidr_ip_address         = local.cidr_ip_address
-  additional_rpms         = local.additional_rpms
-  systemd_pager           = local.systemd_pager
-  sync_time_with_host     = local.sync_time_with_host
-  do_not_countme          = local.do_not_countme
-  etc_hosts               = local.etc_hosts
-  updates_periodic_window = local.updates_periodic_window
-  disks                   = local.disks
-  filesystems             = local.filesystems
+  hostname            = local.hostname
+  ssh_authorized_key  = local.ssh_authorized_key
+  nameservers         = local.nameservers
+  timezone            = local.timezone
+  keymap              = local.keymap
+  rollout_wariness    = local.rollout_wariness
+  cidr_ip_address     = local.cidr_ip_address
+  additional_rpms     = local.additional_rpms
+  systemd_pager       = local.systemd_pager
+  sync_time_with_host = local.sync_time_with_host
+  do_not_countme      = local.do_not_countme
+  etc_hosts           = local.etc_hosts
+  periodic_updates    = local.periodic_updates
+  disks               = local.disks
+  filesystems         = local.filesystems
 }
 
 data "ct_config" "node" {
@@ -86,7 +96,7 @@ data "ct_config" "node" {
     module.butane_common_snippets.hostname,
     module.butane_common_snippets.keymap,
     module.butane_common_snippets.timezone,
-    module.butane_common_snippets.updates_periodic_window,
+    module.butane_common_snippets.periodic_updates,
     module.butane_common_snippets.rollout_wariness,
     module.butane_common_snippets.core_authorized_key,
     module.butane_common_snippets.static_interface,

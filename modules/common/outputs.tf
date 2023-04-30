@@ -33,7 +33,7 @@ output "rollout_wariness" {
   value       = try(data.template_file.butane_snippet_rollout_wariness[0].rendered, "")
 }
 
-output "updates_periodic_window" {
+output "periodic_updates" {
   description = "Butante snippet to set updates periodic window"
   value       = try(data.template_file.butane_snippet_updates_periodic_window[0].rendered, "")
 }

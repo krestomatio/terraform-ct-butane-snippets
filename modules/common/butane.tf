@@ -31,24 +31,30 @@ data "template_file" "butane_snippet_keymap" {
 }
 
 data "template_file" "butane_snippet_updates_periodic_window" {
-  count = var.updates_periodic_window == null ? 0 : 1
+  count = var.periodic_updates == null ? 0 : 1
 
-  template = <<-TEMPLATE
-    ---
-    variant: fcos
-    version: 1.4.0
-    storage:
-      files:
-        - path: /etc/zincati/config.d/55-updates-strategy.toml
-          contents:
-            inline: |
-              [updates]
-              strategy = "periodic"
-              [[updates.periodic.window]]
-              days = ["${join("\", \"", var.updates_periodic_window.days)}"]
-              start_time = "${var.updates_periodic_window.start_time}"
-              length_minutes = ${var.updates_periodic_window.length_minutes}
-  TEMPLATE
+  template = <<TEMPLATE
+---
+variant: fcos
+version: 1.4.0
+storage:
+  files:
+    - path: /etc/zincati/config.d/55-updates-strategy.toml
+      contents:
+        inline: |
+          [updates]
+          strategy = "periodic"
+          %{~if var.periodic_updates.time_zone != ""~}
+          [updates.periodic]
+          time_zone = "${var.periodic_updates.time_zone}"
+          %{~endif~}
+          %{~for periodic_updates_window in var.periodic_updates.windows~}
+          [[updates.periodic.window]]
+          days = ["${join("\", \"", periodic_updates_window.days)}"]
+          start_time = "${periodic_updates_window.start_time}"
+          length_minutes = ${periodic_updates_window.length_minutes}
+          %{~endfor~}
+TEMPLATE
 }
 
 data "template_file" "butane_snippet_rollout_wariness" {
