@@ -30,7 +30,7 @@ data "template_file" "butane_snippet_keymap" {
   TEMPLATE
 }
 
-data "template_file" "butane_snippet_updates_periodic_window" {
+data "template_file" "butane_snippet_periodic_updates" {
   count = var.periodic_updates == null ? 0 : 1
 
   template = <<TEMPLATE

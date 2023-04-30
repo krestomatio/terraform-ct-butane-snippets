@@ -35,7 +35,7 @@ output "rollout_wariness" {
 
 output "periodic_updates" {
   description = "Butante snippet to set updates periodic window"
-  value       = try(data.template_file.butane_snippet_updates_periodic_window[0].rendered, "")
+  value       = try(data.template_file.butane_snippet_periodic_updates[0].rendered, "")
 }
 
 output "keymap" {
