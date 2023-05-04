@@ -1,6 +1,4 @@
 data "template_file" "butane_snippet_install_k3s" {
-  count = var.config != null ? 1 : 0
-
   template = <<TEMPLATE
 ---
 variant: fcos
