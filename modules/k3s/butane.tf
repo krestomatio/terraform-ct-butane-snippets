@@ -64,6 +64,7 @@ systemd:
         %{~endfor~}
         Wants=network-online.target
         After=network-online.target
+        After=additional-rpms.service
         %{~for after_unit in var.after_units~}
         After=${after_unit}
         %{~endfor~}
