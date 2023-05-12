@@ -295,8 +295,8 @@ variant: fcos
 version: 1.4.0
 storage:
   files:
-    # pkg dependencies to be installed by os-additional-rpms.service
-    - path: /var/lib/os-additional-rpms.list
+    # pkg dependencies to be installed by additional-rpms.service
+    - path: /var/lib/additional-rpms.list
       mode: 0644
       overwrite: true
       contents:
@@ -306,7 +306,7 @@ storage:
           %{~endfor~}
 systemd:
   units:
-    - name: os-additional-rpms.service
+    - name: additional-rpms.service
       enabled: true
       contents: |
         [Unit]
@@ -322,7 +322,7 @@ systemd:
         %{~for cmd_pre in var.additional_rpms.cmd_pre~}
         ExecStartPre=${cmd_pre}
         %{~endfor~}
-        ExecStart=/bin/sh -c '/usr/bin/rpm-ostree install --idempotent --reboot --assumeyes --allow-inactive $$(</var/lib/os-additional-rpms.list)'
+        ExecStart=/bin/sh -c '/usr/bin/rpm-ostree install --idempotent --reboot --assumeyes --allow-inactive $$(</var/lib/additional-rpms.list)'
         ExecStart=/bin/touch /var/lib/%N.done
         %{~for cmd_post in var.additional_rpms.cmd_post~}
         ExecStartPost=${cmd_post}

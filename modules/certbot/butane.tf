@@ -5,12 +5,12 @@ variant: fcos
 version: 1.4.0
 storage:
   files:
-    # pkg dependencies to be installed by os-additional-rpms.service
-    - path: /var/lib/os-additional-rpms.list
+    # pkg dependencies to be installed by additional-rpms.service
+    - path: /var/lib/additional-rpms.list
       overwrite: false
       append:
         - inline: |
-            certbot 
+            certbot
             firewalld
     - path: /usr/local/bin/certbot-installer.sh
       mode: 0754
@@ -78,7 +78,7 @@ systemd:
         %{~endfor~}
         Wants=network-online.target
         After=network-online.target
-        After=os-additional-rpms.service
+        After=additional-rpms.service
         %{~for after_unit in var.after_units~}
         After=${after_unit}
         %{~endfor~}

@@ -5,8 +5,8 @@ variant: fcos
 version: 1.4.0
 storage:
   files:
-    # pkg dependencies to be installed by os-additional-rpms.service
-    - path: /var/lib/os-additional-rpms.list
+    # pkg dependencies to be installed by additional-rpms.service
+    - path: /var/lib/additional-rpms.list
       overwrite: false
       append:
         - inline: |
