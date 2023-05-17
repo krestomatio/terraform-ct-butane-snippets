@@ -56,6 +56,7 @@ storage:
               name: fleetlock
             spec:
               clusterIP: ${var.fleetlock.cluster_ip}
+          %{~if length(var.fleetlock.node_selectors) > 0 || length(var.fleetlock.tolerations) > 0~}
           - |-
             apiVersion: apps/v1
             kind: Deployment
@@ -81,6 +82,7 @@ storage:
                     effect: "${toleration.effect}"
                   %{~endfor~}
                   %{~endif~}
+          %{~endif~}
     - path: /usr/local/bin/fleetlock-addon-installer.sh
       mode: 0754
       overwrite: true
