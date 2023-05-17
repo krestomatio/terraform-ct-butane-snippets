@@ -11,6 +11,9 @@ storage:
       append:
         - inline: |
             k3s-selinux
+            %{~if var.fleetlock != null~}
+            golang-sigs-k8s-kustomize
+            %{~endif~}
     - path: /usr/local/bin/k3s-installer.sh
       mode: 0754
       overwrite: true
@@ -18,6 +21,75 @@ storage:
         source: ${var.config.script_url}
         verification:
           hash: sha256-${var.config.script_sha256sum}
+    %{~if var.fleetlock != null~}
+    - path: /var/opt/fleetlock/namespace.yaml
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: default
+    - path: /var/opt/fleetlock/kustomization.yaml
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          namespace: ${var.fleetlock.namespace}
+          resources:
+          - namespace.yaml
+          - https://raw.githubusercontent.com/poseidon/fleetlock/${var.fleetlock.version}/examples/k8s/cluster-role-binding.yaml
+          - https://raw.githubusercontent.com/poseidon/fleetlock/${var.fleetlock.version}/examples/k8s/cluster-role.yaml
+          - https://raw.githubusercontent.com/poseidon/fleetlock/${var.fleetlock.version}/examples/k8s/deployment.yaml
+          - https://raw.githubusercontent.com/poseidon/fleetlock/${var.fleetlock.version}/examples/k8s/role-binding.yaml
+          - https://raw.githubusercontent.com/poseidon/fleetlock/${var.fleetlock.version}/examples/k8s/role.yaml
+          - https://raw.githubusercontent.com/poseidon/fleetlock/${var.fleetlock.version}/examples/k8s/service-account.yaml
+          - https://raw.githubusercontent.com/poseidon/fleetlock/${var.fleetlock.version}/examples/k8s/service.yaml
+          patches:
+          - |-
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: fleetlock
+            spec:
+              clusterIP: ${var.fleetlock.cluster_ip}
+          - |-
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: fleetlock
+            spec:
+              template:
+                spec:
+                  %{~if length(var.fleetlock.node_selectors) > 0~}
+                  nodeSelector:
+                  %{~for label, value in var.fleetlock.node_selectors~}
+                  ${label}: "${value}"
+                  %{~endfor~}
+                  %{~endif~}
+                  %{~if length(var.fleetlock.tolerations) > 0~}
+                  tolerations:
+                  %{~for toleration in var.fleetlock.tolerations~}
+                  - key: "${toleration.key}"
+                    operator: "${toleration.operator}"
+                    %{~if toleration.value != null~}
+                    value: "${toleration.value}"
+                    %{~endif~}
+                    effect: "${toleration.effect}"
+                  %{~endfor~}
+                  %{~endif~}
+    - path: /usr/local/bin/fleetlock-addon-installer.sh
+      mode: 0754
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash
+          mkdir -p ${var.config.data_dir}/server/manifests
+          kustomize build /var/opt/fleetlock > ${var.config.data_dir}/server/manifests/fleetlock.yaml
+    %{~endif~}
     %{~if contains(["server", "agent"], var.mode)~}
     - path: /usr/local/bin/k3s-installer-wait-bootstrap-server.sh
       mode: 0754
@@ -112,6 +184,9 @@ systemd:
         %{~endfor~}
         %{~if contains(["server", "agent"], var.mode)~}
         ExecStartPre=/usr/local/bin/k3s-installer-wait-bootstrap-server.sh
+        %{~endif~}
+        %{~if var.fleetlock != null~}
+        ExecStartPre=/usr/local/bin/fleetlock-addon-installer.sh
         %{~endif~}
         ExecStart=/usr/local/bin/k3s-installer.sh
 %{~if contains(["bootstrap", "server"], var.mode)} server%{endif}

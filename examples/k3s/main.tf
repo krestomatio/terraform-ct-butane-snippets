@@ -13,6 +13,9 @@ locals {
   token       = "secret_token"
   agent_token = "secret_agent_token"
   channel     = "stable"
+  fleetlock = {
+    version = "v0.4.0"
+  }
 }
 
 ######################## module #########################
@@ -24,6 +27,7 @@ module "butane_k3s_snippets" {
   token       = local.token
   agent_token = local.agent_token
   channel     = local.channel
+  fleetlock   = local.fleetlock
 }
 
 data "ct_config" "node" {

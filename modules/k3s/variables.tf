@@ -50,6 +50,31 @@ variable "config" {
   }
 }
 
+variable "fleetlock" {
+  type = object(
+    {
+      version        = optional(string, "v0.4.0")
+      namespace      = optional(string, "fleetlock")
+      cluster_ip     = optional(string, "10.43.0.15")
+      node_selectors = optional(list(map(string)), [])
+      tolerations = optional(
+        list(
+          object(
+            {
+              key      = string
+              operator = string
+              value    = optional(string)
+              effect   = string
+            }
+          )
+        ), []
+      )
+    }
+  )
+  description = "Fleetlock addon for zincati upgrade orchestration"
+  default     = null
+}
+
 variable "before_units" {
   type        = list(string)
   default     = []
