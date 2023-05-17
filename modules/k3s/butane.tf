@@ -22,6 +22,15 @@ storage:
         verification:
           hash: sha256-${var.config.script_sha256sum}
     %{~if var.fleetlock != null~}
+    - path: /etc/zincati/config.d/60-fleetlock-updates-strategy.toml
+      contents:
+        inline: |
+          [identity]
+          group = "${coalesce(var.fleetlock.group, var.mode == "agent" ? "agents" : "servers")}"
+          [updates]
+          strategy = "fleet_lock"
+          [updates.fleet_lock]
+          base_url = "http://${var.fleetlock.cluster_ip}"
     - path: /var/opt/fleetlock/namespace.yaml
       mode: 0644
       overwrite: true
