@@ -74,6 +74,13 @@ storage:
             spec:
               template:
                 spec:
+                  containers:
+                  - name: fleetlock
+                    env:
+                    - name: NAMESPACE
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: metadata.namespace
                   %{~if length(var.fleetlock.node_selectors) > 0~}
                   nodeSelector:
                   %{~for label, value in var.fleetlock.node_selectors~}
