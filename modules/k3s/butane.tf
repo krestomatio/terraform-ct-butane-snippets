@@ -131,7 +131,7 @@ storage:
           [rancher-k3s-common]
           name=Rancher K3s Common)
           baseurl=${var.config.repo_baseurl}
-          enabled=1
+          enabled=${var.config.testing_repo ? "0" : "1"}
           gpgcheck=1
           repo_gpgcheck=0
           gpgkey=${var.config.repo_gpgkey}
