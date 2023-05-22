@@ -135,6 +135,18 @@ storage:
           gpgcheck=1
           repo_gpgcheck=0
           gpgkey=${var.config.repo_gpgkey}
+    - path: /etc/yum.repos.d/rancher-k3s-testing-common.repo
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [rancher-k3s-testing-common]
+          name=Rancher K3s Testing Common)
+          baseurl=${var.config.testing_repo_baseurl}
+          enabled=${var.config.testing_repo ? "1" : "0"}
+          gpgcheck=1
+          repo_gpgcheck=0
+          gpgkey=${var.config.testing_repo_gpgkey}
     %{~if var.secret_encryption.key != null && contains(["bootstrap", "server"], var.mode)~}
     - path: ${var.secret_encryption.path}
       mode: 0600
