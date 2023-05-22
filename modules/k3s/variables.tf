@@ -46,7 +46,7 @@ variable "config" {
     repo_baseurl         = "https://rpm.rancher.io/k3s/stable/common/centos/8/noarch/"
     repo_gpgkey          = "https://rpm.rancher.io/public.key"
     testing_repo         = false
-    testing_repo_baseurl = "https://rpm-testing.rancher.io/k3s/testing/common/centos/8/noarch/"
+    testing_repo_baseurl = "https://rpm-testing.rancher.io/k3s/testing/common/coreos/noarch/"
     testing_repo_gpgkey  = "https://rpm-testing.rancher.io/public.key"
   }
   nullable = false
