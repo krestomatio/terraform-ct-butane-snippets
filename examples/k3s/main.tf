@@ -47,6 +47,7 @@ data "ct_config" "node" {
 
 ######################### outputs #########################
 output "ignition" {
-  value       = data.ct_config.node.rendered
+  value       = module.butane_k3s_snippets.config
   description = "Ignition config"
+  sensitive   = true
 }

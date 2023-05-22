@@ -32,7 +32,7 @@ variable "config" {
       repo_gpgkey      = optional(string, "https://rpm.rancher.io/public.key")
       # TODO: change to false afet bug fixed:
       # https://github.com/k3s-io/k3s/issues/6814
-      testing_repo         = optional(bool, false)
+      testing_repo         = optional(bool, true)
       testing_repo_baseurl = optional(string, "https://rpm-testing.rancher.io/k3s/testing/common/coreos/noarch/")
       testing_repo_gpgkey  = optional(string, "https://rpm-testing.rancher.io/public.key")
     }
@@ -49,7 +49,7 @@ variable "config" {
     repo_gpgkey      = "https://rpm.rancher.io/public.key"
     # TODO: change to false afet bug fixed:
     # https://github.com/k3s-io/k3s/issues/6814
-    testing_repo         = false
+    testing_repo         = true
     testing_repo_baseurl = "https://rpm-testing.rancher.io/k3s/testing/common/coreos/noarch/"
     testing_repo_gpgkey  = "https://rpm-testing.rancher.io/public.key"
   }
