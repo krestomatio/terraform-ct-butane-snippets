@@ -217,3 +217,9 @@ variable "additional_rpms" {
   }
   nullable = false
 }
+
+variable "sysctl" {
+  description = "Additional kernel tuning in sysctl.d"
+  type        = map(string)
+  default     = null
+}

@@ -30,6 +30,7 @@ No modules.
 | [template_file.butane_snippet_rollout_wariness](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_static_interface](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_sync_time_with_host](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
+| [template_file.butane_snippet_sysctl](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_systemd_pager](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_timezone](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 
@@ -53,6 +54,7 @@ No modules.
 | <a name="input_rollout_wariness"></a> [rollout\_wariness](#input\_rollout\_wariness) | Wariness to update, 1.0 (very cautious) to 0.0 (very eager) | `string` | `""` | no |
 | <a name="input_ssh_authorized_key"></a> [ssh\_authorized\_key](#input\_ssh\_authorized\_key) | Authorized ssh key for core user | `string` | `""` | no |
 | <a name="input_sync_time_with_host"></a> [sync\_time\_with\_host](#input\_sync\_time\_with\_host) | Sync guest time with the kvm host | `bool` | `false` | no |
+| <a name="input_sysctl"></a> [sysctl](#input\_sysctl) | Additional kernel tuning in sysctl.d | `map(string)` | `null` | no |
 | <a name="input_systemd_pager"></a> [systemd\_pager](#input\_systemd\_pager) | Systemd pager | `string` | `""` | no |
 | <a name="input_timezone"></a> [timezone](#input\_timezone) | Timezone for VMs as listed by `timedatectl list-timezones` | `string` | `""` | no |
 
@@ -73,6 +75,7 @@ No modules.
 | <a name="output_rollout_wariness"></a> [rollout\_wariness](#output\_rollout\_wariness) | Butane snipped to set rollout wariness |
 | <a name="output_static_interface"></a> [static\_interface](#output\_static\_interface) | Butane snipped to set the static interface |
 | <a name="output_sync_time_with_host"></a> [sync\_time\_with\_host](#output\_sync\_time\_with\_host) | Butante snippet to sync guest time with the kvm host |
+| <a name="output_sysctl"></a> [sysctl](#output\_sysctl) | Butante snippet to tuning kernel adding to sysctl.d |
 | <a name="output_systemd_pager"></a> [systemd\_pager](#output\_systemd\_pager) | Butante snippet to set systemd pager |
 | <a name="output_timezone"></a> [timezone](#output\_timezone) | Butane snipped to set the timezone |
 <!-- END_TF_DOCS -->

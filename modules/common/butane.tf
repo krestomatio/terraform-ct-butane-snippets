@@ -369,3 +369,22 @@ data "template_file" "butane_snippet_systemd_pager" {
               export SYSTEMD_PAGER=${var.systemd_pager}
   TEMPLATE
 }
+
+data "template_file" "butane_snippet_sysctl" {
+  count = var.sysctl != null ? 1 : 0
+
+  template = <<TEMPLATE
+---
+variant: fcos
+version: 1.4.0
+storage:
+  files:
+    - path: /etc/sysctl.d/10-tuning.conf
+      mode: 0644
+      contents:
+        inline: |
+          %{~for key, value in var.sysctl~}
+          ${key} = ${value}
+          %{~endfor~}
+TEMPLATE
+}

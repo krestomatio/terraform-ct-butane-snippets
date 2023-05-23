@@ -72,3 +72,8 @@ output "systemd_pager" {
   description = "Butante snippet to set systemd pager"
   value       = try(data.template_file.butane_snippet_systemd_pager[0].rendered, "")
 }
+
+output "sysctl" {
+  description = "Butante snippet to tuning kernel adding to sysctl.d"
+  value       = try(data.template_file.butane_snippet_sysctl[0].rendered, "")
+}

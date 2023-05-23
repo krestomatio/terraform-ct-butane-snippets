@@ -10,6 +10,10 @@ locals {
   systemd_pager       = "cat"
   sync_time_with_host = true
   do_not_countme      = true
+  sysctl = {
+    "vm.swappiness"      = "0"
+    "net.core.somaxconn" = "32768"
+  }
   additional_rpms = {
     list = ["qemu-guest-agent"]
   }
@@ -74,6 +78,7 @@ module "butane_common_snippets" {
   cidr_ip_address     = local.cidr_ip_address
   additional_rpms     = local.additional_rpms
   systemd_pager       = local.systemd_pager
+  sysctl              = local.sysctl
   sync_time_with_host = local.sync_time_with_host
   do_not_countme      = local.do_not_countme
   etc_hosts           = local.etc_hosts
@@ -106,6 +111,7 @@ data "ct_config" "node" {
     module.butane_common_snippets.additional_rpms,
     module.butane_common_snippets.sync_time_with_host,
     module.butane_common_snippets.systemd_pager,
+    module.butane_common_snippets.sysctl,
     module.butane_common_snippets.do_not_countme
   ]
 }
