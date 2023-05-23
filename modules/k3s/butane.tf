@@ -21,6 +21,16 @@ storage:
         source: ${var.config.script_url}
         verification:
           hash: sha256-${var.config.script_sha256sum}
+    - path: /usr/local/bin/k3s-installer-post.sh
+      mode: 0754
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash
+
+          # workaround for https://github.com/k3s-io/k3s-selinux/issues/36#issuecomment-1556803739
+          mkdir -p ${var.config.data_dir}/storage
+          restorecon -R ${var.config.data_dir}
     %{~if var.fleetlock != null~}
     - path: /etc/zincati/config.d/60-fleetlock-updates-strategy.toml
       contents:
@@ -224,6 +234,7 @@ systemd:
 %{~if contains(["agent", "server"], var.mode)} --server ${var.origin_server}%{endif}
 %{~if var.config.selinux} --selinux%{endif}
 %{~if true} --data-dir ${var.config.data_dir} ${join(" ", var.config.parameters)}%{endif}
+        ExecStart=/usr/local/bin/k3s-installer-post.sh
         ExecStart=/bin/touch /var/lib/%N.done
 
         [Install]
