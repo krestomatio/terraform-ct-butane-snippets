@@ -16,18 +16,25 @@ locals {
   fleetlock = {
     version = "v0.4.0"
   }
+  kubelet_config = {
+    content = <<-TEMPLATE
+      shutdownGracePeriod: 30s
+      shutdownGracePeriodCriticalPods: 10s
+    TEMPLATE
+  }
 }
 
 ######################## module #########################
 module "butane_k3s_snippets" {
   source = "../../modules/k3s"
 
-  config      = local.config
-  mode        = local.mode
-  token       = local.token
-  agent_token = local.agent_token
-  channel     = local.channel
-  fleetlock   = local.fleetlock
+  config         = local.config
+  mode           = local.mode
+  token          = local.token
+  agent_token    = local.agent_token
+  channel        = local.channel
+  fleetlock      = local.fleetlock
+  kubelet_config = local.kubelet_config
 }
 
 data "ct_config" "node" {
@@ -49,4 +56,10 @@ data "ct_config" "node" {
 output "ignition" {
   value       = data.ct_config.node.rendered
   description = "Ignition config"
+}
+
+output "butane" {
+  value       = module.butane_k3s_snippets.config
+  description = "Butane config"
+  sensitive   = true
 }

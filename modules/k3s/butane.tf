@@ -118,6 +118,16 @@ storage:
           mkdir -p ${var.config.data_dir}/server/manifests
           kustomize build /var/opt/fleetlock > ${var.config.data_dir}/server/manifests/fleetlock.yaml
     %{~endif~}
+    %{~if var.kubelet_config.content != ""~}
+    - path: /etc/rancher/k3s/kubelet-config.yaml
+      mode: 0640
+      overwrite: true
+      contents:
+        inline: |
+          apiVersion: kubelet.config.k8s.io/${var.kubelet_config.version}
+          kind: KubeletConfiguration
+          ${indent(10, var.kubelet_config.content)}
+    %{~endif~}
     %{~if contains(["server", "agent"], var.mode)~}
     - path: /usr/local/bin/k3s-installer-wait-bootstrap-server.sh
       mode: 0754
@@ -233,6 +243,7 @@ systemd:
 %{~if contains(["agent"], var.mode)} agent%{endif}
 %{~if contains(["agent", "server"], var.mode)} --server ${var.origin_server}%{endif}
 %{~if var.config.selinux} --selinux%{endif}
+%{~if var.kubelet_config.content != ""} --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml'%{endif}
 %{~if true} --data-dir ${var.config.data_dir} ${join(" ", var.config.parameters)}%{endif}
         ExecStart=/usr/local/bin/k3s-installer-post.sh
         ExecStart=/bin/touch /var/lib/%N.done

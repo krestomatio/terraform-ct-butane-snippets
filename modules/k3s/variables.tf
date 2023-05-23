@@ -86,6 +86,20 @@ variable "fleetlock" {
   default     = null
 }
 
+variable "kubelet_config" {
+  type = object(
+    {
+      version = optional(string, "v1beta1")
+      content = optional(string, "")
+    }
+  )
+  description = "Contains the configuration for the Kubelet"
+  default = {
+    version = "v1beta1"
+    content = ""
+  }
+}
+
 variable "before_units" {
   type        = list(string)
   default     = []
