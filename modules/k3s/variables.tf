@@ -98,6 +98,7 @@ variable "kubelet_config" {
     version = "v1beta1"
     content = ""
   }
+  nullable = false
 }
 
 variable "before_units" {
