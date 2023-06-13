@@ -31,13 +31,6 @@ storage:
           # workaround for https://github.com/k3s-io/k3s-selinux/issues/36#issuecomment-1556803739
           mkdir -p ${var.config.data_dir}/storage
           restorecon -R ${var.config.data_dir}
-
-          %{~if contains(["bootstrap", "server"], var.mode)~}
-          # add option to import hosts in coredns if server
-          sed -zi "s@hosts /etc/coredns/NodeHosts {\n          ttl 60@hosts /etc/coredns/NodeHosts {\n          import /etc/coredns/custom/*.hosts\n          ttl 60@" ${var.config.data_dir}/server/manifests/coredns.yaml
-          kubectl replace -f ${var.config.data_dir}/server/manifests/coredns.yaml
-          kubectl -n kube-system rollout restart deployment coredns
-          %{~endif~}
     %{~if var.fleetlock != null~}
     - path: /etc/zincati/config.d/60-fleetlock-updates-strategy.toml
       contents:
