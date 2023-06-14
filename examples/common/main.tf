@@ -24,6 +24,10 @@ locals {
       fqdn     = "server-01.example.com"
     }
   ]
+  etc_hosts_extra = <<-TEMPLATE
+    192.168.0.20 server-11.example.com
+    192.168.0.30 server-21.example.com
+  TEMPLATE
   periodic_updates = {
     time_zone = "localtime"
     windows = [
@@ -82,6 +86,7 @@ module "butane_common_snippets" {
   sync_time_with_host = local.sync_time_with_host
   do_not_countme      = local.do_not_countme
   etc_hosts           = local.etc_hosts
+  etc_hosts_extra     = local.etc_hosts_extra
   periodic_updates    = local.periodic_updates
   disks               = local.disks
   filesystems         = local.filesystems

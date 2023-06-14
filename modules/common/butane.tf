@@ -139,7 +139,7 @@ storage:
             %{~endif~}
             %{~if var.etc_hosts_extra != ""~}
             # extra hosts
-            ${var.etc_hosts_extra}
+            ${indent(12, var.etc_hosts_extra)}
             %{~endif~}
 TEMPLATE
 }
