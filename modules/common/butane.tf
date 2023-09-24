@@ -327,7 +327,7 @@ systemd:
         %{~for cmd_post in var.additional_rpms.cmd_post~}
         ExecStartPost=${cmd_post}
         %{~endfor~}
-        ExecStartPost=/usr/bin/systemctl reboot
+        ExecStartPost=/usr/bin/systemctl --no-block reboot
         [Install]
         WantedBy=multi-user.target
 TEMPLATE
