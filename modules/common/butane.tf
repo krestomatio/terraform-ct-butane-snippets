@@ -313,21 +313,23 @@ systemd:
         Description=Layer additional rpms
         Wants=network-online.target
         After=network-online.target
+        After=systemd-machine-id-commit.service
         # We run before `zincati.service` to avoid conflicting rpm-ostree transactions.
         Before=zincati.service
+        Before=shutdown.target
         ConditionPathExists=!/var/lib/%N.done
         [Service]
         Type=oneshot
         RemainAfterExit=yes
         %{~for cmd_pre in var.additional_rpms.cmd_pre~}
-        ExecStartPre=${cmd_pre}
+        ExecStart=${cmd_pre}
         %{~endfor~}
         ExecStart=/bin/sh -c '/usr/bin/rpm-ostree install --idempotent --assumeyes --allow-inactive $$(</var/lib/additional-rpms.list)'
         ExecStart=/bin/touch /var/lib/%N.done
         %{~for cmd_post in var.additional_rpms.cmd_post~}
-        ExecStartPost=${cmd_post}
+        ExecStart=${cmd_post}
         %{~endfor~}
-        ExecStartPost=/usr/bin/systemctl --no-block reboot
+        ExecStart=/usr/bin/systemctl --no-block reboot
         [Install]
         WantedBy=multi-user.target
 TEMPLATE
