@@ -322,11 +322,12 @@ systemd:
         %{~for cmd_pre in var.additional_rpms.cmd_pre~}
         ExecStartPre=${cmd_pre}
         %{~endfor~}
-        ExecStart=/bin/sh -c '/usr/bin/rpm-ostree install --idempotent --reboot --assumeyes --allow-inactive $$(</var/lib/additional-rpms.list)'
+        ExecStart=/bin/sh -c '/usr/bin/rpm-ostree install --idempotent --assumeyes --allow-inactive $$(</var/lib/additional-rpms.list)'
         ExecStart=/bin/touch /var/lib/%N.done
         %{~for cmd_post in var.additional_rpms.cmd_post~}
         ExecStartPost=${cmd_post}
         %{~endfor~}
+        ExecStartPost=/usr/bin/systemctl reboot
         [Install]
         WantedBy=multi-user.target
 TEMPLATE
