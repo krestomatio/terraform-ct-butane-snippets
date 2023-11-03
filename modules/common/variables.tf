@@ -179,8 +179,8 @@ variable "filesystems" {
     object(
       {
         device          = string
-        path            = string
         format          = string
+        path            = optional(string)
         with_mount_unit = optional(bool)
         wipe_filesystem = optional(bool)
         label           = optional(string)
