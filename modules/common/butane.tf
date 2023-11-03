@@ -257,10 +257,12 @@ storage:
   filesystems:
     %{~for filesystem in var.filesystems~}
     - device: ${filesystem.device}
+      format: ${filesystem.format}
+      %{~if filesystem.path != null~}
       # NOTE: all data is expected to be stored inside `/var`
       # REF: https://docs.fedoraproject.org/en-US/fedora-coreos/storage/#_configuration_in_etc_and_state_in_var
       path: ${filesystem.path}
-      format: ${filesystem.format}
+      %{~endif~}
       %{~if filesystem.with_mount_unit != null~}
       with_mount_unit: ${filesystem.with_mount_unit}
       %{~endif~}
