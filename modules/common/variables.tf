@@ -193,12 +193,6 @@ variable "filesystems" {
   description = "Filesystems list"
   default     = []
   nullable    = false
-  validation {
-    condition = alltrue([
-      for filesystem in var.filesystems : can(regex("^/var/.+$", filesystem.path))
-    ])
-    error_message = "Mount path should be inside `/var` [Link](https://docs.fedoraproject.org/en-US/fedora-coreos/storage/#_configuration_in_etc_and_state_in_var)"
-  }
 }
 
 variable "additional_rpms" {
