@@ -94,7 +94,7 @@ variable "cidr_ip_address" {
   type        = string
   description = "CIDR IP Address. Ex: 192.168.1.101/24"
   validation {
-    condition     = can(cidrhost(var.cidr_ip_address, 1))
+    condition     = var.cidr_ip_address == null || can(cidrhost(var.cidr_ip_address, 1))
     error_message = "Check cidr_ip_address format"
   }
   default = null
