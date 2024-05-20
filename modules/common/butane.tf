@@ -289,7 +289,7 @@ TEMPLATE
 }
 
 data "template_file" "butane_snippet_additional_rpms" {
-  count = length(var.additional_rpms) > 0 ? 1 : 0
+  count = var.additional_rpms != null ? 1 : 0
 
   template = <<TEMPLATE
 ---
@@ -297,6 +297,7 @@ variant: fcos
 version: 1.4.0
 storage:
   files:
+    %{~if length(var.additional_rpms.list) > 0~}
     # pkg dependencies to be installed by additional-rpms.service
     - path: /var/lib/additional-rpms.list
       mode: 0644
@@ -306,6 +307,7 @@ storage:
           %{~for additional_rpm in var.additional_rpms.list~}
           ${additional_rpm}
           %{~endfor~}
+    %{~endif~}
 systemd:
   units:
     - name: additional-rpms.service
@@ -319,6 +321,7 @@ systemd:
         # We run before `zincati.service` to avoid conflicting rpm-ostree transactions.
         Before=zincati.service
         Before=shutdown.target
+        ConditionPathExists=/var/lib/additional-rpms.list
         ConditionPathExists=!/var/lib/%N.done
         [Service]
         Type=oneshot
