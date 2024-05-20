@@ -25,6 +25,7 @@ No modules.
 | [template_file.butane_snippet_filesystems](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_grub_password_hash](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_hostname](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
+| [template_file.butane_snippet_init_config_script](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_keymap](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_periodic_updates](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_rollout_wariness](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
@@ -44,9 +45,10 @@ No modules.
 | <a name="input_do_not_countme"></a> [do\_not\_countme](#input\_do\_not\_countme) | Disable Fedora CoreOS infrastructure count me feature | `bool` | `true` | no |
 | <a name="input_etc_hosts"></a> [etc\_hosts](#input\_etc\_hosts) | /etc/host list | <pre>list(<br>    object(<br>      {<br>        ip       = string<br>        hostname = string<br>        fqdn     = string<br>      }<br>    )<br>  )</pre> | `[]` | no |
 | <a name="input_etc_hosts_extra"></a> [etc\_hosts\_extra](#input\_etc\_hosts\_extra) | /etc/host extra block | `string` | `""` | no |
-| <a name="input_filesystems"></a> [filesystems](#input\_filesystems) | Filesystems list | <pre>list(<br>    object(<br>      {<br>        device          = string<br>        path            = string<br>        format          = string<br>        with_mount_unit = optional(bool)<br>        wipe_filesystem = optional(bool)<br>        label           = optional(string)<br>        uuid            = optional(string)<br>        options         = optional(string)<br>        mount_options   = optional(list(string))<br>      }<br>    )<br>  )</pre> | `[]` | no |
+| <a name="input_filesystems"></a> [filesystems](#input\_filesystems) | Filesystems list | <pre>list(<br>    object(<br>      {<br>        device          = string<br>        format          = string<br>        path            = optional(string)<br>        with_mount_unit = optional(bool)<br>        wipe_filesystem = optional(bool)<br>        label           = optional(string)<br>        uuid            = optional(string)<br>        options         = optional(string)<br>        mount_options   = optional(list(string))<br>      }<br>    )<br>  )</pre> | `[]` | no |
 | <a name="input_grub_password_hash"></a> [grub\_password\_hash](#input\_grub\_password\_hash) | grub2-mkpasswd-pbkdf2 password hash for GRUB | `string` | `""` | no |
 | <a name="input_hostname"></a> [hostname](#input\_hostname) | Hostname | `string` | `""` | no |
+| <a name="input_init_config_script"></a> [init\_config\_script](#input\_init\_config\_script) | Content to include in a init config script. It runs after additional rpms are installed | `string` | `""` | no |
 | <a name="input_interface_name"></a> [interface\_name](#input\_interface\_name) | Network interface name | `string` | `"ens3"` | no |
 | <a name="input_keymap"></a> [keymap](#input\_keymap) | Keymap | `string` | `""` | no |
 | <a name="input_nameservers"></a> [nameservers](#input\_nameservers) | List of nameservers for VMs | `list(string)` | `[]` | no |
@@ -70,12 +72,13 @@ No modules.
 | <a name="output_filesystems"></a> [filesystems](#output\_filesystems) | Butante snippet to set storage filesystems |
 | <a name="output_grub_password_hash"></a> [grub\_password\_hash](#output\_grub\_password\_hash) | Butane snipped to set a grub2 password |
 | <a name="output_hostname"></a> [hostname](#output\_hostname) | Butante snippet to set hostname |
+| <a name="output_init_config_script"></a> [init\_config\_script](#output\_init\_config\_script) | Butante snippet to set a init config script |
 | <a name="output_keymap"></a> [keymap](#output\_keymap) | Butante snippet to set keymap |
 | <a name="output_periodic_updates"></a> [periodic\_updates](#output\_periodic\_updates) | Butante snippet to set updates periodic window |
 | <a name="output_rollout_wariness"></a> [rollout\_wariness](#output\_rollout\_wariness) | Butane snipped to set rollout wariness |
 | <a name="output_static_interface"></a> [static\_interface](#output\_static\_interface) | Butane snipped to set the static interface |
 | <a name="output_sync_time_with_host"></a> [sync\_time\_with\_host](#output\_sync\_time\_with\_host) | Butante snippet to sync guest time with the kvm host |
-| <a name="output_sysctl"></a> [sysctl](#output\_sysctl) | Butante snippet to tuning kernel adding to sysctl.d |
+| <a name="output_sysctl"></a> [sysctl](#output\_sysctl) | Butante snippet for tuning kernel by adding to sysctl.d |
 | <a name="output_systemd_pager"></a> [systemd\_pager](#output\_systemd\_pager) | Butante snippet to set systemd pager |
 | <a name="output_timezone"></a> [timezone](#output\_timezone) | Butane snipped to set the timezone |
 <!-- END_TF_DOCS -->

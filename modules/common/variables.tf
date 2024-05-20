@@ -217,3 +217,10 @@ variable "sysctl" {
   type        = map(string)
   default     = null
 }
+
+variable "init_config_script" {
+  type        = string
+  description = "Content to include in a init config script. It runs after additional rpms are installed"
+  default     = ""
+  nullable    = false
+}

@@ -396,3 +396,46 @@ storage:
           %{~endfor~}
 TEMPLATE
 }
+
+data "template_file" "butane_snippet_init_config_script" {
+  count = var.init_config_script != "" ? 1 : 0
+
+  template = <<TEMPLATE
+---
+variant: fcos
+version: 1.4.0
+storage:
+  files:
+    - path: /usr/local/bin/init-config.sh
+      mode: 0754
+      overwrite: true
+      contents:
+        inline: |
+          ${indent(10, var.init_config_script)}
+systemd:
+  units:
+    - name: init-config-script.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Install Init Config Script
+        # We run before `zincati.service` to avoid conflicting rpm-ostree
+        # transactions.
+        Before=zincati.service
+        Wants=network-online.target
+        After=network-online.target
+        After=additional-rpms.service
+        ConditionPathExists=/usr/local/bin/init-config.sh
+        ConditionPathExists=!/var/lib/%N.done
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        Restart=on-failure
+        ExecStart=/usr/local/bin/init-config.sh
+        ExecStart=/bin/touch /var/lib/%N.done
+
+        [Install]
+        WantedBy=multi-user.target
+TEMPLATE
+}
