@@ -63,11 +63,12 @@ variable "config" {
 variable "fleetlock" {
   type = object(
     {
-      version        = optional(string, "v0.4.0")
-      namespace      = optional(string, "fleetlock")
-      cluster_ip     = optional(string, "10.43.0.15")
-      group          = optional(string)
-      node_selectors = optional(list(map(string)), [])
+      version           = optional(string, "v0.4.0")
+      namespace         = optional(string, "fleetlock")
+      cluster_ip        = optional(string, "10.43.0.15")
+      group             = optional(string)
+      node_selectors    = optional(list(map(string)), [])
+      kustomize_version = optional(string, "5.4.2")
       tolerations = optional(
         list(
           object(

@@ -11,9 +11,6 @@ storage:
       append:
         - inline: |
             k3s-selinux
-            %{~if var.fleetlock != null~}
-            golang-sigs-k8s-kustomize
-            %{~endif~}
     - path: /usr/local/bin/k3s-installer.sh
       mode: 0754
       overwrite: true
@@ -114,9 +111,21 @@ storage:
       overwrite: true
       contents:
         inline: |
-          #!/bin/bash
+          #!/bin/bash -e
+          echo "Installing kustomize..."
+          if ! which kustomize &>/dev/null; then
+            ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
+            KUSTOMIZE_VERSION=${var.fleetlock.kustomize_version}
+            curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$$${KUSTOMIZE_VERSION}/kustomize_v$$${KUSTOMIZE_VERSION}_linux_$$${ARCH}.tar.gz | tar -xzvf -
+            mkdir -p ~/.local/bin
+            mv kustomize ~/.local/bin/kustomize
+          fi
+          echo "Done installing kustomize
+
+          echo "Installing fleetlock manifests..."
           mkdir -p ${var.config.data_dir}/server/manifests
           kustomize build /var/opt/fleetlock > ${var.config.data_dir}/server/manifests/fleetlock.yaml
+          echo "Done installing fleetlock manifests"
     %{~endif~}
     %{~if var.kubelet_config.content != ""~}
     - path: /etc/rancher/k3s/kubelet-config.yaml
