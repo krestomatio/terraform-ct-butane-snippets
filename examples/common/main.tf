@@ -70,7 +70,7 @@ locals {
 }
 
 ######################## module #########################
-module "butane_common_snippets" {
+module "butane_snippets_common" {
   source = "../../modules/common"
 
   hostname            = local.hostname
@@ -103,21 +103,21 @@ data "ct_config" "node" {
   TEMPLATE
 
   snippets = [
-    module.butane_common_snippets.hostname,
-    module.butane_common_snippets.keymap,
-    module.butane_common_snippets.timezone,
-    module.butane_common_snippets.periodic_updates,
-    module.butane_common_snippets.rollout_wariness,
-    module.butane_common_snippets.core_authorized_key,
-    module.butane_common_snippets.static_interface,
-    module.butane_common_snippets.etc_hosts,
-    module.butane_common_snippets.disks,
-    module.butane_common_snippets.filesystems,
-    module.butane_common_snippets.additional_rpms,
-    module.butane_common_snippets.sync_time_with_host,
-    module.butane_common_snippets.systemd_pager,
-    module.butane_common_snippets.sysctl,
-    module.butane_common_snippets.do_not_countme
+    module.butane_snippets_common.hostname,
+    module.butane_snippets_common.keymap,
+    module.butane_snippets_common.timezone,
+    module.butane_snippets_common.periodic_updates,
+    module.butane_snippets_common.rollout_wariness,
+    module.butane_snippets_common.core_authorized_key,
+    module.butane_snippets_common.static_interface,
+    module.butane_snippets_common.etc_hosts,
+    module.butane_snippets_common.disks,
+    module.butane_snippets_common.filesystems,
+    module.butane_snippets_common.additional_rpms,
+    module.butane_snippets_common.sync_time_with_host,
+    module.butane_snippets_common.systemd_pager,
+    module.butane_snippets_common.sysctl,
+    module.butane_snippets_common.do_not_countme
   ]
 }
 
