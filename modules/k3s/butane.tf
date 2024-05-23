@@ -65,46 +65,46 @@ storage:
           - https://raw.githubusercontent.com/poseidon/fleetlock/${var.fleetlock.version}/examples/k8s/service-account.yaml
           - https://raw.githubusercontent.com/poseidon/fleetlock/${var.fleetlock.version}/examples/k8s/service.yaml
           patches:
-          - |-
-            apiVersion: v1
-            kind: Service
-            metadata:
-              name: fleetlock
-            spec:
-              clusterIP: ${var.fleetlock.cluster_ip}
+          - patch: |-
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: fleetlock
+              spec:
+                clusterIP: ${var.fleetlock.cluster_ip}
           %{~if length(var.fleetlock.node_selectors) > 0 || length(var.fleetlock.tolerations) > 0~}
-          - |-
-            apiVersion: apps/v1
-            kind: Deployment
-            metadata:
-              name: fleetlock
-            spec:
-              template:
-                spec:
-                  containers:
-                  - name: fleetlock
-                    env:
-                    - name: NAMESPACE
-                      valueFrom:
-                        fieldRef:
-                          fieldPath: metadata.namespace
-                  %{~if length(var.fleetlock.node_selectors) > 0~}
-                  nodeSelector:
-                  %{~for label, value in var.fleetlock.node_selectors~}
-                  ${label}: "${value}"
-                  %{~endfor~}
-                  %{~endif~}
-                  %{~if length(var.fleetlock.tolerations) > 0~}
-                  tolerations:
-                  %{~for toleration in var.fleetlock.tolerations~}
-                  - key: "${toleration.key}"
-                    operator: "${toleration.operator}"
-                    %{~if toleration.value != null~}
-                    value: "${toleration.value}"
+          - patch: |-
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: fleetlock
+              spec:
+                template:
+                  spec:
+                    containers:
+                    - name: fleetlock
+                      env:
+                      - name: NAMESPACE
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: metadata.namespace
+                    %{~if length(var.fleetlock.node_selectors) > 0~}
+                    nodeSelector:
+                    %{~for label, value in var.fleetlock.node_selectors~}
+                    ${label}: "${value}"
+                    %{~endfor~}
                     %{~endif~}
-                    effect: "${toleration.effect}"
-                  %{~endfor~}
-                  %{~endif~}
+                    %{~if length(var.fleetlock.tolerations) > 0~}
+                    tolerations:
+                    %{~for toleration in var.fleetlock.tolerations~}
+                    - key: "${toleration.key}"
+                      operator: "${toleration.operator}"
+                      %{~if toleration.value != null~}
+                      value: "${toleration.value}"
+                      %{~endif~}
+                      effect: "${toleration.effect}"
+                    %{~endfor~}
+                    %{~endif~}
           %{~endif~}
     - path: /usr/local/bin/fleetlock-addon-installer.sh
       mode: 0754
@@ -116,11 +116,12 @@ storage:
           if ! which kustomize &>/dev/null; then
             ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
             KUSTOMIZE_VERSION=${var.fleetlock.kustomize_version}
-            curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$$${KUSTOMIZE_VERSION}/kustomize_v$$${KUSTOMIZE_VERSION}_linux_$$${ARCH}.tar.gz | tar -xzvf -
-            mkdir -p ~/.local/bin
-            mv kustomize ~/.local/bin/kustomize
+            rm -f /tmp/kustomize
+            curl -sSLo - https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$$${KUSTOMIZE_VERSION}/kustomize_v$$${KUSTOMIZE_VERSION}_linux_$$${ARCH}.tar.gz | tar -C /tmp -xzf -
+            mv /tmp/kustomize /usr/local/bin/kustomize
+            chmod 0544 /usr/local/bin/kustomize
           fi
-          echo "Done installing kustomize
+          echo "Done installing kustomize"
 
           echo "Installing fleetlock manifests..."
           mkdir -p ${var.config.data_dir}/server/manifests
