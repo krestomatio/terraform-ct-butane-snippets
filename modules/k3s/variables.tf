@@ -116,6 +116,20 @@ variable "after_units" {
   nullable    = false
 }
 
+variable "unit_dropin_install_k3s" {
+  type        = string
+  default     = ""
+  description = "Dropin for the install-k3s unit"
+  nullable    = false
+}
+
+variable "unit_dropin_k3s" {
+  type        = string
+  default     = ""
+  description = "Dropin for the k3s unit"
+  nullable    = false
+}
+
 variable "channel" {
   type        = string
   default     = "stable"

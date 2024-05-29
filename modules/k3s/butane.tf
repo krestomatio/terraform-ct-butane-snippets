@@ -186,6 +186,20 @@ storage:
     %{~endif~}
 systemd:
   units:
+    %{~if var.unit_dropin_k3s != ""~}
+    - name: k3s.service
+      dropins:
+        - name: overwrite.conf
+          contents: |
+            ${indent(12, var.unit_dropin_k3s)}
+    %{~endif~}
+    %{~if var.unit_dropin_install_k3s != ""~}
+    - name: install-k3s.service
+      dropins:
+        - name: overwrite.conf
+          contents: |
+            ${indent(12, var.unit_dropin_install_k3s)}
+    %{~endif~}
     - name: install-k3s.service
       enabled: true
       contents: |
