@@ -193,15 +193,14 @@ systemd:
           contents: |
             ${indent(12, var.unit_dropin_k3s)}
     %{~endif~}
-    %{~if var.unit_dropin_install_k3s != ""~}
     - name: install-k3s.service
+      enabled: true
+      %{~if var.unit_dropin_install_k3s != ""~}
       dropins:
         - name: overwrite.conf
           contents: |
             ${indent(12, var.unit_dropin_install_k3s)}
-    %{~endif~}
-    - name: install-k3s.service
-      enabled: true
+      %{~endif~}
       contents: |
         [Unit]
         Description=Install K3s
