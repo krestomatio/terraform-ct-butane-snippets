@@ -190,7 +190,7 @@ systemd:
           contents: |
             ${indent(12, var.unit_dropin_k3s)}
     %{~endif~}
-    - name: install-k3s.service
+    - name: ${var.install_service_name}
       enabled: true
       %{~if var.unit_dropin_install_k3s != ""~}
       dropins:

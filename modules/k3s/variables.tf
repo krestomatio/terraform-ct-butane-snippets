@@ -133,6 +133,13 @@ variable "post_script" {
   nullable    = false
 }
 
+variable "install_service_name" {
+  type        = string
+  default     = "install-k3s.service"
+  description = "Name of the K3s install service"
+  nullable    = false
+}
+
 variable "channel" {
   type        = string
   default     = "stable"
