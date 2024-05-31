@@ -39,17 +39,15 @@ variable "config" {
   )
   description = "K3s configuration"
   default = {
-    envvars          = []
-    parameters       = []
-    data_dir         = "/var/lib/rancher/k3s"
-    selinux          = true
-    script_url       = "https://raw.githubusercontent.com/k3s-io/k3s/7e59376bb91d451d3eaf16b9a3f80ae4d711b2bc/install.sh"
-    script_sha256sum = "88152dfac36254d75dd814d52960fd61574e35bc47d8c61f377496a7580414f3"
-    repo_baseurl     = "https://rpm.rancher.io/k3s/stable/common/coreos/noarch/"
-    repo_gpgkey      = "https://rpm.rancher.io/public.key"
-    # TODO: change to false afet bug fixed:
-    # https://github.com/k3s-io/k3s/issues/6814
-    testing_repo         = true
+    envvars              = []
+    parameters           = []
+    data_dir             = "/var/lib/rancher/k3s"
+    selinux              = true
+    script_url           = "https://raw.githubusercontent.com/k3s-io/k3s/7e59376bb91d451d3eaf16b9a3f80ae4d711b2bc/install.sh"
+    script_sha256sum     = "88152dfac36254d75dd814d52960fd61574e35bc47d8c61f377496a7580414f3"
+    repo_baseurl         = "https://rpm.rancher.io/k3s/stable/common/coreos/noarch/"
+    repo_gpgkey          = "https://rpm.rancher.io/public.key"
+    testing_repo         = false
     testing_repo_baseurl = "https://rpm-testing.rancher.io/k3s/testing/common/coreos/noarch/"
     testing_repo_gpgkey  = "https://rpm-testing.rancher.io/public.key"
   }
