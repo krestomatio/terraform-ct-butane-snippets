@@ -126,6 +126,13 @@ variable "unit_dropin_k3s" {
   nullable    = false
 }
 
+variable "post_script" {
+  type        = string
+  default     = ""
+  description = "Post script to run after K3s installation"
+  nullable    = false
+}
+
 variable "channel" {
   type        = string
   default     = "stable"

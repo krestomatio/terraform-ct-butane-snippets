@@ -5,7 +5,6 @@ variant: fcos
 version: 1.4.0
 storage:
   files:
-    # pkg dependencies to be installed by additional-rpms.service
     - path: /var/lib/additional-rpms.list
       overwrite: false
       append:
@@ -18,16 +17,14 @@ storage:
         source: ${var.config.script_url}
         verification:
           hash: sha256-${var.config.script_sha256sum}
+    %{~if var.post_script != ""~}
     - path: /usr/local/bin/k3s-installer-post.sh
       mode: 0754
       overwrite: true
       contents:
         inline: |
-          #!/bin/bash
-
-          # workaround for https://github.com/k3s-io/k3s-selinux/issues/36#issuecomment-1556803739
-          mkdir -p ${var.config.data_dir}/storage
-          restorecon -R ${var.config.data_dir}
+          ${indent(10, var.config.post_script)}
+    %{~endif~}
     %{~if var.fleetlock != null~}
     - path: /etc/zincati/config.d/60-fleetlock-updates-strategy.toml
       contents:
@@ -213,9 +210,6 @@ systemd:
         %{~for after_unit in var.after_units~}
         After=${after_unit}
         %{~endfor~}
-        # We run before `zincati.service` to avoid conflicting rpm-ostree
-        # transactions.
-        Before=zincati.service
         ConditionPathExists=/usr/local/bin/k3s-installer.sh
         ConditionPathExists=/etc/yum.repos.d/rancher-k3s-common.repo
         ConditionPathExists=!/var/lib/%N.done
@@ -235,7 +229,7 @@ systemd:
         Environment="INSTALL_K3S_CHANNEL=${var.channel}"
         %{~endif~}
         %{~if contains(["bootstrap"], var.mode)~}
-        # harmless to leave `K3S_CLUSTER_INIT=true` flag here. See https://github.com/k3s-io/k3s/discussions/7107#discussioncomment-5349940
+        # harmless to leave flag here
         Environment="K3S_CLUSTER_INIT=true"
         %{~endif~}
         %{~if var.mode != "agent"~}
@@ -268,7 +262,9 @@ systemd:
 %{~if var.config.selinux} --selinux%{endif}
 %{~if var.kubelet_config.content != ""} --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml'%{endif}
 %{~if true} --data-dir ${var.config.data_dir} ${join(" ", var.config.parameters)}%{endif}
+        %{~if var.post_script != ""~}
         ExecStart=/usr/local/bin/k3s-installer-post.sh
+        %{~endif~}
         ExecStart=/bin/touch /var/lib/%N.done
 
         [Install]
