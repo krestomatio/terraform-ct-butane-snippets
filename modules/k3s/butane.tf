@@ -35,6 +35,7 @@ storage:
           strategy = "fleet_lock"
           [updates.fleet_lock]
           base_url = "http://${var.fleetlock.cluster_ip}"
+    %{~if contains(["bootstrap"], var.mode)~}
     - path: /var/opt/fleetlock/namespace.yaml
       mode: 0644
       overwrite: true
@@ -124,6 +125,7 @@ storage:
           mkdir -p ${var.config.data_dir}/server/manifests
           kustomize build /var/opt/fleetlock > ${var.config.data_dir}/server/manifests/fleetlock.yaml
           echo "Done installing fleetlock manifests"
+    %{~endif~}
     %{~endif~}
     %{~if var.kubelet_config.content != ""~}
     - path: /etc/rancher/k3s/kubelet-config.yaml
@@ -252,7 +254,7 @@ systemd:
         %{~if contains(["server", "agent"], var.mode)~}
         ExecStartPre=/usr/local/bin/k3s-installer-wait-bootstrap-server.sh
         %{~endif~}
-        %{~if var.fleetlock != null~}
+        %{~if var.fleetlock != null && contains(["bootstrap"], var.mode)~}
         ExecStartPre=/usr/local/bin/fleetlock-addon-installer.sh
         %{~endif~}
         ExecStart=/usr/local/bin/k3s-installer.sh
