@@ -450,7 +450,7 @@ data "template_file" "butane_snippet_disable_zincati" {
     systemd:
       units:
         - name: zincati.service
-          enable: false
+          enabled: false
           mask: true
   TEMPLATE
 }
