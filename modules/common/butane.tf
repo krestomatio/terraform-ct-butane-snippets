@@ -439,3 +439,18 @@ systemd:
         WantedBy=multi-user.target
 TEMPLATE
 }
+
+data "template_file" "butane_snippet_disable_zincati" {
+  count = var.disable_zincati ? 0 : 1
+
+  template = <<-TEMPLATE
+    ---
+    variant: fcos
+    version: 1.4.0
+    systemd:
+      units:
+        - name: zincati.service
+          enable: false
+          mask: true
+  TEMPLATE
+}

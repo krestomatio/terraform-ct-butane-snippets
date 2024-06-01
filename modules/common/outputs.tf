@@ -82,3 +82,8 @@ output "init_config_script" {
   description = "Butante snippet to set a init config script"
   value       = try(data.template_file.butane_snippet_init_config_script[0].rendered, "")
 }
+
+output "disable_zincati" {
+  description = "Butante snippet to disable zincati"
+  value       = try(data.template_file.butane_snippet_disable_zincati[0].rendered, "")
+}

@@ -224,3 +224,10 @@ variable "init_config_script" {
   default     = ""
   nullable    = false
 }
+
+variable "disable_zincati" {
+  type        = bool
+  description = "Disable zincati systemd service"
+  default     = false
+  nullable    = false
+}
