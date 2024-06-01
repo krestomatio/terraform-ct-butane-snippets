@@ -120,7 +120,6 @@ storage:
       contents:
         inline: |
           #!/bin/bash -e
-          echo "Installing kustomize..."
           if ! which kustomize &>/dev/null; then
             ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
             KUSTOMIZE_VERSION=${var.fleetlock.kustomize_version}
@@ -129,12 +128,9 @@ storage:
             mv /tmp/kustomize /usr/local/bin/kustomize
             chmod 0544 /usr/local/bin/kustomize
           fi
-          echo "Done installing kustomize"
 
-          echo "Installing fleetlock manifests..."
           mkdir -p ${var.config.data_dir}/server/manifests
           kustomize build /var/opt/fleetlock > ${var.config.data_dir}/server/manifests/fleetlock.yaml
-          echo "Done installing fleetlock manifests"
     %{~endif~}
     %{~endif~}
     %{~if var.kubelet_config.content != ""~}
@@ -156,7 +152,6 @@ storage:
           #!/bin/bash
           server_host=${try(split(":", split("://", var.origin_server)[1])[0], var.origin_server)}
           server_port=${try(split(":", var.origin_server)[2], "443")}
-          echo "Waiting for bootstrap server ${var.origin_server}..."
           while ! timeout 1 bash -c "2> /dev/null > /dev/tcp/$$${server_host}/$$${server_port}"; do
             echo "Waiting for bootstrap server ${var.origin_server}..."
             sleep 5
