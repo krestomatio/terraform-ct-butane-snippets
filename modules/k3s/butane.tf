@@ -17,13 +17,13 @@ storage:
         source: ${var.config.script_url}
         verification:
           hash: sha256-${var.config.script_sha256sum}
-    %{~if var.post_script != ""~}
+    %{~if var.k3s_install_post_script != ""~}
     - path: /usr/local/bin/k3s-installer-post.sh
       mode: 0754
       overwrite: true
       contents:
         inline: |
-          ${indent(10, var.config.post_script)}
+          ${indent(10, var.k3s_install_post_script)}
     %{~endif~}
     %{~if var.fleetlock != null~}
     - path: /etc/zincati/config.d/60-fleetlock-updates-strategy.toml
@@ -264,7 +264,7 @@ systemd:
 %{~if var.config.selinux} --selinux%{endif}
 %{~if var.kubelet_config.content != ""} --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml'%{endif}
 %{~if true} --data-dir ${var.config.data_dir} ${join(" ", var.config.parameters)}%{endif}
-        %{~if var.post_script != ""~}
+        %{~if var.k3s_install_post_script != ""~}
         ExecStart=/usr/local/bin/k3s-installer-post.sh
         %{~endif~}
         ExecStart=/bin/touch /var/lib/%N.done
