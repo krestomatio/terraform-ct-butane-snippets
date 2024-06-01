@@ -17,6 +17,16 @@ storage:
         source: ${var.config.script_url}
         verification:
           hash: sha256-${var.config.script_sha256sum}
+    %{~if var.config.selinux~}
+    - path: /usr/local/bin/k3s-installer-selinux-data-dir.sh
+      mode: 0754
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash
+          mkdir -p ${var.config.data_dir}/storage
+          restorecon -R ${var.config.data_dir}
+    %{~endif~}
     %{~if var.k3s_install_post_script != ""~}
     - path: /usr/local/bin/k3s-installer-post.sh
       mode: 0754
@@ -264,6 +274,9 @@ systemd:
 %{~if var.config.selinux} --selinux%{endif}
 %{~if var.kubelet_config.content != ""} --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml'%{endif}
 %{~if true} --data-dir ${var.config.data_dir} ${join(" ", var.config.parameters)}%{endif}
+        %{~if var.config.selinux~}
+        ExecStart=/usr/local/bin/k3s-installer-selinux-data-dir.sh
+        %{~endif~}
         %{~if var.k3s_install_post_script != ""~}
         ExecStart=/usr/local/bin/k3s-installer-post.sh
         %{~endif~}
