@@ -441,7 +441,7 @@ TEMPLATE
 }
 
 data "template_file" "butane_snippet_disable_zincati" {
-  count = var.disable_zincati ? 0 : 1
+  count = var.disable_zincati ? 1 : 0
 
   template = <<-TEMPLATE
     ---
