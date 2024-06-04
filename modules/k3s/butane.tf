@@ -297,6 +297,7 @@ systemd:
 
         [Install]
         WantedBy=multi-user.target
+        WantedBy=k3s.service
     %{~endif~}
     %{~if var.unit_dropin_k3s != ""~}
     - name: k3s.service
