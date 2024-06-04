@@ -1,3 +1,8 @@
+locals {
+  kubectl_server_option          = var.origin_server != "" ? "--server ${var.origin_server}" : ""
+  k3s_shutdown_cordon_state_file = "${var.config.data_dir}/k3s-uncordon.todo"
+}
+
 data "template_file" "butane_snippet_install_k3s" {
   template = <<TEMPLATE
 ---
@@ -17,6 +22,48 @@ storage:
         source: ${var.config.script_url}
         verification:
           hash: sha256-${var.config.script_sha256sum}
+    %{~if var.shutdown.service~}
+    - path: /usr/local/bin/k3s-shutdown.sh
+      mode: 0754
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash
+          if /usr/bin/systemctl is-active --quiet k3s.service; then
+            %{~if var.shutdown.drain~}
+            already_cordoned=$(/usr/local/bin/k3s kubectl ${local.kubectl_server_option} get node $(hostname -f) -o jsonpath='{.spec.unschedulable}')
+            /usr/local/bin/k3s kubectl ${local.kubectl_server_option} \
+                drain "$(hostname -f)" \
+                %{~if var.shutdown.drain_timeout != "0"~}
+                --timeout=${var.shutdown.drain_timeout} \
+                %{~endif~}
+                %{~if var.shutdown.drain_request_timeout != "0"~}
+                --request-timeout=${var.shutdown.drain_request_timeout} \
+                %{~endif~}
+                %{~if var.shutdown.drain_grace_period >= 0~}
+                --grace-period=${var.shutdown.drain_grace_period} \
+                %{~endif~}
+                %{~if var.shutdown.drain_skip_wait_for_delete_timeout > 0~}
+                --skip-wait-for-delete-timeout=${var.shutdown.drain_skip_wait_for_delete_timeout} \
+                %{~endif~}
+                --ignore-daemonsets \
+                --delete-emptydir-data \
+                --force
+            [ "$already_cordoned" = "true" ] || touch ${local.k3s_shutdown_cordon_state_file}
+            %{~endif~}
+            %{~if var.shutdown.killall_script~}
+            /usr/local/bin/k3s-killall.sh
+            %{~endif~}
+          fi
+    - path: /usr/local/bin/k3s-uncordon-node.sh
+      mode: 0754
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash
+          /usr/local/bin/k3s kubectl ${local.kubectl_server_option} \
+            uncordon $(hostname -f)
+    %{~endif~}
     %{~if var.config.selinux~}
     - path: /usr/local/bin/k3s-installer-selinux-data-dir.sh
       mode: 0754
@@ -27,14 +74,33 @@ storage:
           mkdir -p ${var.config.data_dir}/storage
           restorecon -R ${var.config.data_dir}
     %{~endif~}
-    %{~if var.k3s_install_post_script != ""~}
-    - path: /usr/local/bin/k3s-installer-post.sh
+    - path: /usr/local/bin/k3s-pre-installer.sh
       mode: 0754
       overwrite: true
       contents:
         inline: |
-          ${indent(10, var.k3s_install_post_script)}
-    %{~endif~}
+          #!/bin/bash -eu
+          %{~if contains(["server", "agent"], var.mode)~}
+          /usr/local/bin/k3s-installer-wait-bootstrap-server.sh
+          %{~endif~}
+          %{~if var.fleetlock != null && contains(["bootstrap"], var.mode)~}
+          /usr/local/bin/fleetlock-addon-installer.sh
+          %{~endif~}
+          %{~if var.config.pre_install_script_snippet != ""~}
+          ${indent(10, var.config.pre_install_script_snippet)}
+          %{~endif~}
+    - path: /usr/local/bin/k3s-post-installer.sh
+      mode: 0754
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash -eu
+          %{~if var.config.selinux~}
+          /usr/local/bin/k3s-installer-selinux-data-dir.sh
+          %{~endif~}
+          %{~if var.config.post_install_script_snippet != ""~}
+          ${indent(10, var.config.post_install_script_snippet)}
+          %{~endif~}
     %{~if var.fleetlock != null~}
     - path: /etc/zincati/config.d/60-fleetlock-updates-strategy.toml
       contents:
@@ -190,6 +256,48 @@ storage:
     %{~endif~}
 systemd:
   units:
+    %{~if var.shutdown.service~}
+    - name: shutdown-k3s.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=K3s Shutdown
+        DefaultDependencies=no
+        Wants=network-online.target
+        After=network-online.target
+        After=k3s.service
+        Requisite=k3s.service
+        Before=shutdown.target
+        RefuseManualStart=yes
+        ConditionPathExists=/usr/local/bin/k3s-shutdown.sh
+
+        [Service]
+        Type=oneshot
+        ExecStart=-/usr/local/bin/k3s-shutdown.sh
+
+        [Install]
+        WantedBy=shutdown.target
+    - name: shutdown-uncordon-k3s.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=K3s Uncordon After Shutdown
+        Wants=network-online.target
+        After=network-online.target
+        After=k3s.service
+        Requires=k3s.service
+        ConditionPathExists=${local.k3s_shutdown_cordon_state_file}
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        Restart=no
+        ExecStart=/usr/local/bin/k3s-uncordon-node.sh
+        ExecStart=/bin/rm -f ${local.k3s_shutdown_cordon_state_file}
+
+        [Install]
+        WantedBy=multi-user.target
+    %{~endif~}
     %{~if var.unit_dropin_k3s != ""~}
     - name: k3s.service
       dropins:
@@ -256,12 +364,7 @@ systemd:
         %{~for envvar in var.config.envvars~}
         Environment="${envvar}"
         %{~endfor~}
-        %{~if contains(["server", "agent"], var.mode)~}
-        ExecStartPre=/usr/local/bin/k3s-installer-wait-bootstrap-server.sh
-        %{~endif~}
-        %{~if var.fleetlock != null && contains(["bootstrap"], var.mode)~}
-        ExecStartPre=/usr/local/bin/fleetlock-addon-installer.sh
-        %{~endif~}
+        ExecStartPre=/usr/local/bin/k3s-pre-installer.sh
         ExecStart=/usr/local/bin/k3s-installer.sh
 %{~if contains(["bootstrap", "server"], var.mode)} server%{endif}
 %{~if contains(["agent"], var.mode)} agent%{endif}
@@ -269,12 +372,7 @@ systemd:
 %{~if var.config.selinux} --selinux%{endif}
 %{~if var.kubelet_config.content != ""} --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml'%{endif}
 %{~if true} --data-dir ${var.config.data_dir} ${join(" ", var.config.parameters)}%{endif}
-        %{~if var.config.selinux~}
-        ExecStart=/usr/local/bin/k3s-installer-selinux-data-dir.sh
-        %{~endif~}
-        %{~if var.k3s_install_post_script != ""~}
-        ExecStart=/usr/local/bin/k3s-installer-post.sh
-        %{~endif~}
+        ExecStartPre=/usr/local/bin/k3s-post-installer.sh
         ExecStart=/bin/touch /var/lib/%N.done
 
         [Install]

@@ -22,32 +22,36 @@ variable "mode" {
 variable "config" {
   type = object(
     {
-      envvars              = optional(list(string), [])
-      parameters           = optional(list(string), [])
-      selinux              = optional(bool, true)
-      data_dir             = optional(string, "/var/lib/rancher/k3s")
-      script_url           = optional(string, "https://raw.githubusercontent.com/k3s-io/k3s/7e59376bb91d451d3eaf16b9a3f80ae4d711b2bc/install.sh")
-      script_sha256sum     = optional(string, "88152dfac36254d75dd814d52960fd61574e35bc47d8c61f377496a7580414f3")
-      repo_baseurl         = optional(string, "https://rpm.rancher.io/k3s/stable/common/coreos/noarch/")
-      repo_gpgkey          = optional(string, "https://rpm.rancher.io/public.key")
-      testing_repo         = optional(bool, false)
-      testing_repo_baseurl = optional(string, "https://rpm-testing.rancher.io/k3s/testing/common/coreos/noarch/")
-      testing_repo_gpgkey  = optional(string, "https://rpm-testing.rancher.io/public.key")
+      envvars                     = optional(list(string), [])
+      parameters                  = optional(list(string), [])
+      selinux                     = optional(bool, true)
+      data_dir                    = optional(string, "/var/lib/rancher/k3s")
+      script_url                  = optional(string, "https://raw.githubusercontent.com/k3s-io/k3s/7e59376bb91d451d3eaf16b9a3f80ae4d711b2bc/install.sh")
+      script_sha256sum            = optional(string, "88152dfac36254d75dd814d52960fd61574e35bc47d8c61f377496a7580414f3")
+      repo_baseurl                = optional(string, "https://rpm.rancher.io/k3s/stable/common/coreos/noarch/")
+      repo_gpgkey                 = optional(string, "https://rpm.rancher.io/public.key")
+      testing_repo                = optional(bool, false)
+      testing_repo_baseurl        = optional(string, "https://rpm-testing.rancher.io/k3s/testing/common/coreos/noarch/")
+      testing_repo_gpgkey         = optional(string, "https://rpm-testing.rancher.io/public.key")
+      post_install_script_snippet = optional(string, "")
+      pre_install_script_snippet  = optional(string, "")
     }
   )
   description = "K3s configuration"
   default = {
-    envvars              = []
-    parameters           = []
-    data_dir             = "/var/lib/rancher/k3s"
-    selinux              = true
-    script_url           = "https://raw.githubusercontent.com/k3s-io/k3s/7e59376bb91d451d3eaf16b9a3f80ae4d711b2bc/install.sh"
-    script_sha256sum     = "88152dfac36254d75dd814d52960fd61574e35bc47d8c61f377496a7580414f3"
-    repo_baseurl         = "https://rpm.rancher.io/k3s/stable/common/coreos/noarch/"
-    repo_gpgkey          = "https://rpm.rancher.io/public.key"
-    testing_repo         = false
-    testing_repo_baseurl = "https://rpm-testing.rancher.io/k3s/testing/common/coreos/noarch/"
-    testing_repo_gpgkey  = "https://rpm-testing.rancher.io/public.key"
+    envvars                     = []
+    parameters                  = []
+    data_dir                    = "/var/lib/rancher/k3s"
+    selinux                     = true
+    script_url                  = "https://raw.githubusercontent.com/k3s-io/k3s/7e59376bb91d451d3eaf16b9a3f80ae4d711b2bc/install.sh"
+    script_sha256sum            = "88152dfac36254d75dd814d52960fd61574e35bc47d8c61f377496a7580414f3"
+    repo_baseurl                = "https://rpm.rancher.io/k3s/stable/common/coreos/noarch/"
+    repo_gpgkey                 = "https://rpm.rancher.io/public.key"
+    testing_repo                = false
+    testing_repo_baseurl        = "https://rpm-testing.rancher.io/k3s/testing/common/coreos/noarch/"
+    testing_repo_gpgkey         = "https://rpm-testing.rancher.io/public.key"
+    post_install_script_snippet = ""
+    pre_install_script_snippet  = ""
   }
   nullable = false
   validation {
@@ -126,13 +130,6 @@ variable "unit_dropin_k3s" {
   nullable    = false
 }
 
-variable "k3s_install_post_script" {
-  type        = string
-  default     = ""
-  description = "Post script to run after K3s installation"
-  nullable    = false
-}
-
 variable "install_service_name" {
   type        = string
   default     = "install-k3s.service"
@@ -183,5 +180,30 @@ variable "agent_token" {
   default     = ""
   sensitive   = true
   description = "K3s token for agents to join the cluster"
+  nullable    = false
+}
+
+variable "shutdown" {
+  type = object(
+    {
+      service                            = optional(bool, true)
+      drain                              = optional(bool, true)
+      drain_request_timeout              = optional(string, "0")
+      drain_timeout                      = optional(string, "0")
+      drain_grace_period                 = optional(number, -1)
+      drain_skip_wait_for_delete_timeout = optional(number, 0)
+      killall_script                     = optional(bool, true)
+    }
+  )
+  default = {
+    service                            = true
+    drain                              = true
+    drain_request_timeout              = "0"
+    drain_timeout                      = "0"
+    drain_grace_period                 = -1
+    drain_skip_wait_for_delete_timeout = 0
+    killall_script                     = true
+  }
+  description = "Shutdown systemd service options"
   nullable    = false
 }
