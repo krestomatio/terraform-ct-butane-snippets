@@ -54,10 +54,6 @@ storage:
               --force
             [ "$already_cordoned" = "true" ] || touch ${local.k3s_shutdown_cordon_state_file}
             %{~endif~}
-            %{~if var.shutdown.delete_node~}
-            /usr/local/bin/k3s kubectl ${local.kubectl_server_option} \
-              delete node "$(hostname -f)"
-            %{~endif~}
             %{~if var.shutdown.killall_script~}
             /usr/local/bin/k3s-killall.sh
             %{~endif~}
