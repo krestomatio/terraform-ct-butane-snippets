@@ -192,6 +192,7 @@ variable "shutdown" {
       drain_timeout                      = optional(string, "0")
       drain_grace_period                 = optional(number, -1)
       drain_skip_wait_for_delete_timeout = optional(number, 0)
+      delete_node                        = optional(bool, false)
       killall_script                     = optional(bool, true)
     }
   )
@@ -202,6 +203,7 @@ variable "shutdown" {
     drain_timeout                      = "0"
     drain_grace_period                 = -1
     drain_skip_wait_for_delete_timeout = 0
+    delete_node                        = false
     killall_script                     = true
   }
   description = "Shutdown systemd service options"

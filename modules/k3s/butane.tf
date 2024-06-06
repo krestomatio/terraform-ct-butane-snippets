@@ -1,6 +1,8 @@
 locals {
   kubectl_server_option          = var.origin_server != "" ? "--server ${var.origin_server}" : ""
   k3s_shutdown_cordon_state_file = "${var.config.data_dir}/k3s-uncordon.todo"
+  k3s_service_name               = var.mode == "agent" ? "k3s-agent.service" : "k3s.service"
+  k3s_kubelet_kubeconfig         = "${var.config.data_dir}/agent/kubelet.kubeconfig"
 }
 
 data "template_file" "butane_snippet_install_k3s" {
@@ -29,27 +31,32 @@ storage:
       contents:
         inline: |
           #!/bin/bash
-          if /usr/bin/systemctl is-active --quiet k3s.service; then
+          export KUBECONFIG=$$${KUBECONFIG:-${local.k3s_kubelet_kubeconfig}}
+          if /usr/bin/systemctl is-active --quiet ${local.k3s_service_name}; then
             %{~if var.shutdown.drain~}
-            already_cordoned=$(/usr/local/bin/k3s kubectl ${local.kubectl_server_option} get node $(hostname -f) -o jsonpath='{.spec.unschedulable}')
+            already_cordoned="$(/usr/local/bin/k3s kubectl ${local.kubectl_server_option} get node "$(hostname -f)" -o jsonpath='{.spec.unschedulable}')"
             /usr/local/bin/k3s kubectl ${local.kubectl_server_option} \
-                drain "$(hostname -f)" \
-                %{~if var.shutdown.drain_timeout != "0"~}
-                --timeout=${var.shutdown.drain_timeout} \
-                %{~endif~}
-                %{~if var.shutdown.drain_request_timeout != "0"~}
-                --request-timeout=${var.shutdown.drain_request_timeout} \
-                %{~endif~}
-                %{~if var.shutdown.drain_grace_period >= 0~}
-                --grace-period=${var.shutdown.drain_grace_period} \
-                %{~endif~}
-                %{~if var.shutdown.drain_skip_wait_for_delete_timeout > 0~}
-                --skip-wait-for-delete-timeout=${var.shutdown.drain_skip_wait_for_delete_timeout} \
-                %{~endif~}
-                --ignore-daemonsets \
-                --delete-emptydir-data \
-                --force
+              drain "$(hostname -f)" \
+              %{~if var.shutdown.drain_timeout != "0"~}
+              --timeout=${var.shutdown.drain_timeout} \
+              %{~endif~}
+              %{~if var.shutdown.drain_request_timeout != "0"~}
+              --request-timeout=${var.shutdown.drain_request_timeout} \
+              %{~endif~}
+              %{~if var.shutdown.drain_grace_period >= 0~}
+              --grace-period=${var.shutdown.drain_grace_period} \
+              %{~endif~}
+              %{~if var.shutdown.drain_skip_wait_for_delete_timeout > 0~}
+              --skip-wait-for-delete-timeout=${var.shutdown.drain_skip_wait_for_delete_timeout} \
+              %{~endif~}
+              --ignore-daemonsets \
+              --delete-emptydir-data \
+              --force
             [ "$already_cordoned" = "true" ] || touch ${local.k3s_shutdown_cordon_state_file}
+            %{~endif~}
+            %{~if var.shutdown.delete_node~}
+            /usr/local/bin/k3s kubectl ${local.kubectl_server_option} \
+              delete node "$(hostname -f)"
             %{~endif~}
             %{~if var.shutdown.killall_script~}
             /usr/local/bin/k3s-killall.sh
@@ -61,7 +68,8 @@ storage:
       contents:
         inline: |
           #!/bin/bash
-          /usr/local/bin/k3s kubectl ${local.kubectl_server_option} \
+          export KUBECONFIG=$$${KUBECONFIG:-${local.k3s_kubelet_kubeconfig}}
+          /usr/local/bin/k3s kubectl ${local.kubectl_server_option}  \
             uncordon $(hostname -f)
     %{~endif~}
     %{~if var.config.selinux~}
@@ -257,7 +265,7 @@ storage:
 systemd:
   units:
     %{~if var.shutdown.service~}
-    - name: shutdown-k3s.service
+    - name: shutdown-${local.k3s_service_name}
       enabled: true
       contents: |
         [Unit]
@@ -265,8 +273,8 @@ systemd:
         DefaultDependencies=no
         Wants=network-online.target
         After=network-online.target
-        After=k3s.service
-        Requisite=k3s.service
+        After=${local.k3s_service_name}
+        Requisite=${local.k3s_service_name}
         Before=shutdown.target
         RefuseManualStart=yes
         ConditionPathExists=/usr/local/bin/k3s-shutdown.sh
@@ -277,15 +285,15 @@ systemd:
 
         [Install]
         WantedBy=shutdown.target
-    - name: shutdown-uncordon-k3s.service
+    - name: shutdown-uncordon-${local.k3s_service_name}
       enabled: true
       contents: |
         [Unit]
         Description=K3s Uncordon After Shutdown
         Wants=network-online.target
         After=network-online.target
-        After=k3s.service
-        Requires=k3s.service
+        After=${local.k3s_service_name}
+        Requires=${local.k3s_service_name}
         ConditionPathExists=${local.k3s_shutdown_cordon_state_file}
 
         [Service]
@@ -297,10 +305,10 @@ systemd:
 
         [Install]
         WantedBy=multi-user.target
-        WantedBy=k3s.service
+        WantedBy=${local.k3s_service_name}
     %{~endif~}
     %{~if var.unit_dropin_k3s != ""~}
-    - name: k3s.service
+    - name: ${local.k3s_service_name}
       dropins:
         - name: overwrite.conf
           contents: |
