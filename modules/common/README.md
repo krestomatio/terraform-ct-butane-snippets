@@ -19,6 +19,7 @@ No modules.
 |------|------|
 | [template_file.butane_snippet_additional_rpms](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_core_authorized_key](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
+| [template_file.butane_snippet_disable_zincati](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_disks](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_do_not_countme](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_etc_hosts](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
@@ -41,6 +42,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_additional_rpms"></a> [additional\_rpms](#input\_additional\_rpms) | Additional rpms to install during boot using rpm-ostree, along with any pre or post command | <pre>object(<br>    {<br>      cmd_pre  = optional(list(string), [])<br>      list     = optional(list(string), [])<br>      cmd_post = optional(list(string), [])<br>    }<br>  )</pre> | <pre>{<br>  "cmd_post": [],<br>  "cmd_pre": [],<br>  "list": []<br>}</pre> | no |
 | <a name="input_cidr_ip_address"></a> [cidr\_ip\_address](#input\_cidr\_ip\_address) | CIDR IP Address. Ex: 192.168.1.101/24 | `string` | `null` | no |
+| <a name="input_disable_zincati"></a> [disable\_zincati](#input\_disable\_zincati) | Disable zincati systemd service | `bool` | `false` | no |
 | <a name="input_disks"></a> [disks](#input\_disks) | Disks list | <pre>list(<br>    object(<br>      {<br>        device     = string<br>        wipe_table = optional(bool, false)<br>        partitions = optional(<br>          list(<br>            object(<br>              {<br>                resize               = optional(bool)<br>                label                = optional(string)<br>                number               = optional(number)<br>                size_mib             = optional(number)<br>                start_mib            = optional(number)<br>                type_guid            = optional(string)<br>                guid                 = optional(string)<br>                wipe_partition_entry = optional(bool)<br>                should_exist         = optional(bool, true)<br>              }<br>            )<br>          )<br>        )<br>      }<br>    )<br>  )</pre> | `[]` | no |
 | <a name="input_do_not_countme"></a> [do\_not\_countme](#input\_do\_not\_countme) | Disable Fedora CoreOS infrastructure count me feature | `bool` | `true` | no |
 | <a name="input_etc_hosts"></a> [etc\_hosts](#input\_etc\_hosts) | /etc/host list | <pre>list(<br>    object(<br>      {<br>        ip       = string<br>        hostname = string<br>        fqdn     = string<br>      }<br>    )<br>  )</pre> | `[]` | no |
@@ -66,6 +68,7 @@ No modules.
 |------|-------------|
 | <a name="output_additional_rpms"></a> [additional\_rpms](#output\_additional\_rpms) | Butante snippet to install additional rpms unsing rpm-ostree |
 | <a name="output_core_authorized_key"></a> [core\_authorized\_key](#output\_core\_authorized\_key) | Butane snipped to set an authorized key for core user |
+| <a name="output_disable_zincati"></a> [disable\_zincati](#output\_disable\_zincati) | Butante snippet to disable zincati |
 | <a name="output_disks"></a> [disks](#output\_disks) | Butante snippet to set storage disks |
 | <a name="output_do_not_countme"></a> [do\_not\_countme](#output\_do\_not\_countme) | Butane snipped to disable Fedora count me feature |
 | <a name="output_etc_hosts"></a> [etc\_hosts](#output\_etc\_hosts) | Butane snipped to append to /etc/hosts |
