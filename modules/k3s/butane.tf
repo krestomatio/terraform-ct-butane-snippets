@@ -108,16 +108,15 @@ storage:
           ${indent(10, var.install_script_snippet)}
           %{~endif~}
 
-          /usr/local/bin/k3s-installer.sh \
+          /usr/local/bin/k3s-installer.sh ${contains(["bootstrap", "server"], var.mode) ? "server" : "agent"} \
             %{~if var.kubelet_config.content != ""~}
             --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml' \
             %{~endif~}
             %{~for parameter in var.config.parameters~}
             ${parameter} \
             %{~endfor~}
-            --data-dir $K3S_DATA_DIR \
             $$${KUBELET_PROVIDER_ID:+--kubelet-arg=provider-id=$KUBELET_PROVIDER_ID} \
-            ${contains(["bootstrap", "server"], var.mode) ? "server" : "agent"}
+            --data-dir $K3S_DATA_DIR
     - path: /usr/local/bin/k3s-post-installer.sh
       mode: 0700
       overwrite: true
