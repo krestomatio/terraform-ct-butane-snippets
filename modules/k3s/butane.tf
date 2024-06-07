@@ -2,7 +2,21 @@ locals {
   kubectl_server_option          = var.origin_server != "" ? "--server ${var.origin_server}" : ""
   k3s_shutdown_cordon_state_file = "${var.config.data_dir}/k3s-uncordon.todo"
   k3s_service_name               = var.mode == "agent" ? "k3s-agent.service" : "k3s.service"
+  k3s_install_service_env_file   = "/etc/systemd/system/${var.install_service_name}.env"
   k3s_kubelet_kubeconfig         = "${var.config.data_dir}/agent/kubelet.kubeconfig"
+  aws_provider_id_snippet        = <<-SNIPPET
+    header_token_ttl="X-aws-ec2-metadata-token-ttl-seconds: 300"
+    metadata_url="http://169.254.169.254/latest"
+    token="$(curl -X PUT -H "$header_token_ttl" $metadata_url/api/token)"
+    header_token="X-aws-ec2-metadata-token: $token"
+    instance_id="$(curl -H "$header_token" $metadata_url/meta-data/instance-id)"
+    aws_region="$(curl -H "$header_token" $metadata_url/meta-data/placement/region)"
+
+    export KUBELET_PROVIDER_ID="aws://$aws_region/$instance_id"
+  SNIPPET
+  provider_id_from = {
+    aws = local.aws_provider_id_snippet
+  }
 }
 
 data "template_file" "butane_snippet_install_k3s" {
@@ -17,6 +31,24 @@ storage:
       append:
         - inline: |
             k3s-selinux
+    - path: /usr/local/bin/k3s-pre-installer.sh
+      mode: 0754
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash -eu
+          %{~if var.config.selinux~}
+          /usr/local/bin/k3s-installer-selinux-data-dir.sh
+          %{~endif~}
+          %{~if contains(["server", "agent"], var.mode)~}
+          /usr/local/bin/k3s-installer-wait-bootstrap-server.sh
+          %{~endif~}
+          %{~if var.fleetlock != null && contains(["bootstrap"], var.mode)~}
+          /usr/local/bin/fleetlock-addon-installer.sh
+          %{~endif~}
+          %{~if var.pre_install_script_snippet != ""~}
+          ${indent(10, var.pre_install_script_snippet)}
+          %{~endif~}
     - path: /usr/local/bin/k3s-installer.sh
       mode: 0754
       overwrite: true
@@ -24,6 +56,77 @@ storage:
         source: ${var.config.script_url}
         verification:
           hash: sha256-${var.config.script_sha256sum}
+    - path: /usr/local/bin/install-k3s.sh
+      mode: 0754
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash
+
+          # vars
+          export K3S_DATA_DIR=$$${K3S_DATA_DIR:-${var.config.data_dir}}
+          %{~for envvar in var.config.envvars~}
+          export ${envvar}
+          %{~endfor~}
+          %{~if var.channel != ""~}
+          export INSTALL_K3S_CHANNEL=$$${INSTALL_K3S_CHANNEL:-${var.channel}}
+          %{~endif~}
+          %{~if var.mode != "agent"~}
+          %{~if var.token != ""~}
+          export K3S_TOKEN=$$${K3S_TOKEN:-${var.token}}
+          %{~endif~}
+          %{~if var.agent_token != ""~}
+          export K3S_AGENT_TOKEN=$$${K3S_AGENT_TOKEN:-${var.agent_token}}
+          %{~endif~}
+          %{~else~}
+          %{~if var.agent_token != ""~}
+          export K3S_TOKEN=$$${K3S_TOKEN:-${var.agent_token}}
+          %{~else~}
+          export K3S_TOKEN=$$${K3S_TOKEN:-${var.token}}
+          %{~endif~}
+          %{~endif~}
+          %{~if contains(["bootstrap"], var.mode)~}
+          if [ ! "$(ls -A "$K3S_DATA_DIR")" ]; then
+            export K3S_CLUSTER_INIT=true
+          else
+            export K3S_URL=$$${K3S_URL:-${var.origin_server}}
+          fi
+          %{~else~}
+          export K3S_URL=$$${K3S_URL:-${var.origin_server}}
+          %{~endif~}
+          %{~if var.config.selinux~}
+          export K3S_SELINUX=$$${K3S_SELINUX:-true}
+          %{~endif~}
+
+          %{~if var.provider_id_from != null~}
+          # provider id
+          ${indent(10, lookup(local.provider_id_from, var.provider_id_from))}
+          %{~endif~}
+
+          %{~if var.install_script_snippet != ""~}
+          # install snippet
+          ${indent(10, var.install_script_snippet)}
+          %{~endif~}
+
+          /usr/local/bin/k3s-installer.sh \
+            %{~if var.kubelet_config.content != ""~}
+            --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml' \
+            %{~endif~}
+            %{~for parameter in var.config.parameters~}
+            ${parameter} \
+            %{~endfor~}
+            --data-dir $K3S_DATA_DIR \
+            $$${KUBELET_PROVIDER_ID:+--kubelet-arg=provider-id=$KUBELET_PROVIDER_ID} \
+            ${contains(["bootstrap", "server"], var.mode) ? "server" : "agent"}
+    - path: /usr/local/bin/k3s-post-installer.sh
+      mode: 0754
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash -eu
+          %{~if var.post_install_script_snippet != ""~}
+          ${indent(10, var.post_install_script_snippet)}
+          %{~endif~}
     %{~if var.shutdown.service~}
     - path: /usr/local/bin/k3s-shutdown.sh
       mode: 0754
@@ -74,37 +177,14 @@ storage:
       overwrite: true
       contents:
         inline: |
-          #!/bin/bash
-          mkdir -p ${var.config.data_dir}/storage
-          restorecon -R ${var.config.data_dir}
+          #!/bin/bash -eu
+          K3S_DATA_DIR=${var.config.data_dir}
+          if [ ! "$(ls -A "$K3S_DATA_DIR=")" ]; then
+              echo "$K3S_DATA_DIR is empty, setting SELinux context"
+              mkdir -p "$K3S_DATA_DIR/storage"
+              restorecon -R "$K3S_DATA_DIR"
+          fi
     %{~endif~}
-    - path: /usr/local/bin/k3s-pre-installer.sh
-      mode: 0754
-      overwrite: true
-      contents:
-        inline: |
-          #!/bin/bash -eu
-          %{~if contains(["server", "agent"], var.mode)~}
-          /usr/local/bin/k3s-installer-wait-bootstrap-server.sh
-          %{~endif~}
-          %{~if var.fleetlock != null && contains(["bootstrap"], var.mode)~}
-          /usr/local/bin/fleetlock-addon-installer.sh
-          %{~endif~}
-          %{~if var.config.pre_install_script_snippet != ""~}
-          ${indent(10, var.config.pre_install_script_snippet)}
-          %{~endif~}
-    - path: /usr/local/bin/k3s-post-installer.sh
-      mode: 0754
-      overwrite: true
-      contents:
-        inline: |
-          #!/bin/bash -eu
-          %{~if var.config.selinux~}
-          /usr/local/bin/k3s-installer-selinux-data-dir.sh
-          %{~endif~}
-          %{~if var.config.post_install_script_snippet != ""~}
-          ${indent(10, var.config.post_install_script_snippet)}
-          %{~endif~}
     %{~if var.fleetlock != null~}
     - path: /etc/zincati/config.d/60-fleetlock-updates-strategy.toml
       contents:
@@ -330,7 +410,10 @@ systemd:
         %{~for after_unit in var.after_units~}
         After=${after_unit}
         %{~endfor~}
+        ConditionPathExists=/usr/local/bin/k3s-pre-installer.sh
         ConditionPathExists=/usr/local/bin/k3s-installer.sh
+        ConditionPathExists=/usr/local/bin/install-k3s.sh
+        ConditionPathExists=/usr/local/bin/k3s-post-installer.sh
         ConditionPathExists=/etc/yum.repos.d/rancher-k3s-common.repo
         ConditionPathExists=!/var/lib/%N.done
         %{~if contains(["server", "agent"], var.mode)~}
@@ -344,41 +427,12 @@ systemd:
         RemainAfterExit=yes
         Restart=on-failure
         RestartSec=60
-        TimeoutStartSec=%{if contains(["bootstrap"], var.mode)}120%{else}180%{endif}
-        %{~if var.channel != ""~}
-        Environment="INSTALL_K3S_CHANNEL=${var.channel}"
-        %{~endif~}
-        %{~if contains(["bootstrap"], var.mode)~}
-        # harmless to leave flag here
-        Environment="K3S_CLUSTER_INIT=true"
-        %{~endif~}
-        %{~if var.mode != "agent"~}
-        %{~if var.token != ""~}
-        Environment="K3S_TOKEN=${var.token}"
-        %{~endif~}
-        %{~if var.agent_token != ""~}
-        Environment="K3S_AGENT_TOKEN=${var.agent_token}"
-        %{~endif~}
-        %{~else~}
-        %{~if var.agent_token != ""~}
-        Environment="K3S_TOKEN=${var.agent_token}"
-        %{~else~}
-        Environment="K3S_TOKEN=${var.token}"
-        %{~endif~}
-        %{~endif~}
-        %{~for envvar in var.config.envvars~}
-        Environment="${envvar}"
-        %{~endfor~}
+        TimeoutStartSec=${contains(["bootstrap"], var.mode) ? "120" : "180"}
+        EnvironmentFile=-${local.k3s_install_service_env_file}
         ExecStartPre=/usr/local/bin/k3s-pre-installer.sh
-        ExecStart=/usr/local/bin/k3s-installer.sh
-%{~if contains(["bootstrap", "server"], var.mode)} server%{endif}
-%{~if contains(["agent"], var.mode)} agent%{endif}
-%{~if contains(["agent", "server"], var.mode)} --server ${var.origin_server}%{endif}
-%{~if var.config.selinux} --selinux%{endif}
-%{~if var.kubelet_config.content != ""} --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml'%{endif}
-%{~if true} --data-dir ${var.config.data_dir} ${join(" ", var.config.parameters)}%{endif}
-        ExecStartPre=/usr/local/bin/k3s-post-installer.sh
+        ExecStart=/usr/local/bin/install-k3s.sh
         ExecStart=/bin/touch /var/lib/%N.done
+        ExecStartPost=/usr/local/bin/k3s-post-installer.sh
 
         [Install]
         WantedBy=multi-user.target
