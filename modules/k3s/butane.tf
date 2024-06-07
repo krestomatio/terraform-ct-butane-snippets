@@ -32,7 +32,7 @@ storage:
         - inline: |
             k3s-selinux
     - path: /usr/local/bin/k3s-pre-installer.sh
-      mode: 0754
+      mode: 0700
       overwrite: true
       contents:
         inline: |
@@ -50,14 +50,14 @@ storage:
           ${indent(10, var.pre_install_script_snippet)}
           %{~endif~}
     - path: /usr/local/bin/k3s-installer.sh
-      mode: 0754
+      mode: 0700
       overwrite: true
       contents:
         source: ${var.config.script_url}
         verification:
           hash: sha256-${var.config.script_sha256sum}
     - path: /usr/local/bin/install-k3s.sh
-      mode: 0754
+      mode: 0700
       overwrite: true
       contents:
         inline: |
@@ -119,7 +119,7 @@ storage:
             $$${KUBELET_PROVIDER_ID:+--kubelet-arg=provider-id=$KUBELET_PROVIDER_ID} \
             ${contains(["bootstrap", "server"], var.mode) ? "server" : "agent"}
     - path: /usr/local/bin/k3s-post-installer.sh
-      mode: 0754
+      mode: 0700
       overwrite: true
       contents:
         inline: |
