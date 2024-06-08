@@ -4,6 +4,7 @@ locals {
   k3s_service_name               = var.mode == "agent" ? "k3s-agent.service" : "k3s.service"
   k3s_install_service_env_file   = "/etc/systemd/system/${var.install_service_name}.env"
   k3s_kubelet_kubeconfig         = "${var.config.data_dir}/agent/kubelet.kubeconfig"
+  k3s_etcd_dir                   = "${var.config.data_dir}/server/db/etcd"
   aws_provider_id_snippet        = <<-SNIPPET
     header_token_ttl="X-aws-ec2-metadata-token-ttl-seconds: 300"
     metadata_url="http://169.254.169.254/latest"
@@ -86,10 +87,10 @@ storage:
           %{~endif~}
           %{~endif~}
           %{~if contains(["bootstrap"], var.mode)~}
-          if [ ! "$(ls -A "$K3S_DATA_DIR")" ]; then
-            export K3S_CLUSTER_INIT=true
-          else
+          if [[ -d "${local.k3s_etcd_dir}" && "$(ls -A "${local.k3s_etcd_dir}")" ]]; then
             export K3S_URL=$$${K3S_URL:-${var.origin_server}}
+          else
+            export K3S_CLUSTER_INIT=true
           fi
           %{~else~}
           export K3S_URL=$$${K3S_URL:-${var.origin_server}}
