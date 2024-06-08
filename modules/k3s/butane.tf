@@ -118,6 +118,8 @@ storage:
             %{~endfor~}
             $$${KUBELET_PROVIDER_ID:+--kubelet-arg=provider-id=$KUBELET_PROVIDER_ID} \
             --data-dir $K3S_DATA_DIR
+
+          systemctl enable --now ${local.k3s_service_name}
     - path: /usr/local/bin/k3s-post-installer.sh
       mode: 0700
       overwrite: true
