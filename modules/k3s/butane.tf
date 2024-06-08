@@ -5,6 +5,7 @@ locals {
   k3s_install_service_env_file   = "/etc/systemd/system/${var.install_service_name}.env"
   k3s_kubelet_kubeconfig         = "${var.config.data_dir}/agent/kubelet.kubeconfig"
   k3s_etcd_dir                   = "${var.config.data_dir}/server/db/etcd"
+  k3s_secret_encryption_path     = "${var.config.data_dir}/server/cred/encryption-config.json"
   aws_provider_id_snippet        = <<-SNIPPET
     header_token_ttl="X-aws-ec2-metadata-token-ttl-seconds: 300"
     metadata_url="http://169.254.169.254/latest"
@@ -333,12 +334,12 @@ storage:
           gpgcheck=1
           repo_gpgcheck=0
           gpgkey=${var.config.testing_repo_gpgkey}
-    %{~if var.secret_encryption.key != null && contains(["bootstrap", "server"], var.mode)~}
-    - path: ${var.secret_encryption.path}
+    %{~if var.secret_encryption_key != "" && contains(["bootstrap", "server"], var.mode)~}
+    - path: ${local.k3s_secret_encryption_path}
       mode: 0600
       contents:
         inline: |
-          {"kind":"EncryptionConfiguration","apiVersion":"apiserver.config.k8s.io/v1","resources":[{"resources":["secrets"],"providers":[{"aescbc":{"keys":[{"name":"aescbckey","secret":"${var.secret_encryption.key}"}]}},{"identity":{}}]}]}
+          {"kind":"EncryptionConfiguration","apiVersion":"apiserver.config.k8s.io/v1","resources":[{"resources":["secrets"],"providers":[{"aescbc":{"keys":[{"name":"aescbckey","secret":"${base64encode(var.secret_encryption_key)}"}]}},{"identity":{}}]}]}
     %{~endif~}
 systemd:
   units:

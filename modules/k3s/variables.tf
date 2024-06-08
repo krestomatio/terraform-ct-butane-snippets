@@ -147,19 +147,11 @@ variable "origin_server" {
   nullable    = false
 }
 
-variable "secret_encryption" {
-  type = object(
-    {
-      key  = optional(string)
-      path = optional(string, "/var/lib/rancher/k3s/server/cred/encryption-config.json")
-    }
-  )
-  default = {
-    key  = null
-    path = "/var/lib/rancher/k3s/server/cred/encryption-config.json"
-  }
+variable "secret_encryption_key" {
+  type        = string
+  default     = ""
   sensitive   = true
-  description = "Set an specific secret encryption (inteneded only for bootstrap)"
+  description = "Set an specific secret encryption key (inteneded only for bootstrap and without base64 encoding)"
   nullable    = false
 }
 
