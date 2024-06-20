@@ -1,24 +1,11 @@
 locals {
   kubectl_server_option          = var.origin_server != "" ? "--server ${var.origin_server}" : ""
-  k3s_shutdown_cordon_state_file = "${var.config.data_dir}/k3s-uncordon.todo"
+  k3s_shutdown_cordon_state_file = "${var.data_dir}/k3s-uncordon.todo"
   k3s_service_name               = var.mode == "agent" ? "k3s-agent.service" : "k3s.service"
   k3s_install_service_env_file   = "/etc/systemd/system/${var.install_service_name}.env"
-  k3s_kubelet_kubeconfig         = "${var.config.data_dir}/agent/kubelet.kubeconfig"
-  k3s_etcd_dir                   = "${var.config.data_dir}/server/db/etcd"
-  k3s_secret_encryption_path     = "${var.config.data_dir}/server/cred/encryption-config.json"
-  aws_provider_id_snippet        = <<-SNIPPET
-    header_token_ttl="X-aws-ec2-metadata-token-ttl-seconds: 300"
-    metadata_url="http://169.254.169.254/latest"
-    token="$(curl -X PUT -H "$header_token_ttl" $metadata_url/api/token)"
-    header_token="X-aws-ec2-metadata-token: $token"
-    instance_id="$(curl -H "$header_token" $metadata_url/meta-data/instance-id)"
-    aws_region="$(curl -H "$header_token" $metadata_url/meta-data/placement/region)"
-
-    export KUBELET_PROVIDER_ID="aws://$aws_region/$instance_id"
-  SNIPPET
-  provider_id_from = {
-    aws = local.aws_provider_id_snippet
-  }
+  k3s_kubelet_kubeconfig         = "${var.data_dir}/agent/kubelet.kubeconfig"
+  k3s_etcd_dir                   = "${var.data_dir}/server/db/etcd"
+  k3s_secret_encryption_path     = "${var.data_dir}/server/cred/encryption-config.json"
 }
 
 data "template_file" "butane_snippet_install_k3s" {
@@ -39,7 +26,7 @@ storage:
       contents:
         inline: |
           #!/bin/bash -eu
-          %{~if var.config.selinux~}
+          %{~if var.selinux~}
           /usr/local/bin/k3s-installer-selinux-data-dir.sh
           %{~endif~}
           %{~if contains(["server", "agent"], var.mode)~}
@@ -55,9 +42,9 @@ storage:
       mode: 0700
       overwrite: true
       contents:
-        source: ${var.config.script_url}
+        source: ${var.script_url}
         verification:
-          hash: sha256-${var.config.script_sha256sum}
+          hash: sha256-${var.script_sha256sum}
     - path: /usr/local/bin/install-k3s.sh
       mode: 0700
       overwrite: true
@@ -66,8 +53,8 @@ storage:
           #!/bin/bash
 
           # vars
-          export K3S_DATA_DIR=$$${K3S_DATA_DIR:-${var.config.data_dir}}
-          %{~for envvar in var.config.envvars~}
+          export K3S_DATA_DIR=$$${K3S_DATA_DIR:-${var.data_dir}}
+          %{~for envvar in var.script_envvars~}
           export ${envvar}
           %{~endfor~}
           %{~if var.channel != ""~}
@@ -96,13 +83,8 @@ storage:
           %{~else~}
           export K3S_URL=$$${K3S_URL:-${var.origin_server}}
           %{~endif~}
-          %{~if var.config.selinux~}
+          %{~if var.selinux~}
           export K3S_SELINUX=$$${K3S_SELINUX:-true}
-          %{~endif~}
-
-          %{~if var.provider_id_from != null~}
-          # provider id
-          ${indent(10, lookup(local.provider_id_from, var.provider_id_from))}
           %{~endif~}
 
           %{~if var.install_script_snippet != ""~}
@@ -114,7 +96,7 @@ storage:
             %{~if var.kubelet_config.content != ""~}
             --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml' \
             %{~endif~}
-            %{~for parameter in var.config.parameters~}
+            %{~for parameter in var.script_parameters~}
             ${parameter} \
             %{~endfor~}
             $$${KUBELET_PROVIDER_ID:+--kubelet-arg=provider-id=$KUBELET_PROVIDER_ID} \
@@ -174,14 +156,14 @@ storage:
           /usr/local/bin/k3s kubectl ${local.kubectl_server_option}  \
             uncordon $(hostname -f)
     %{~endif~}
-    %{~if var.config.selinux~}
+    %{~if var.selinux~}
     - path: /usr/local/bin/k3s-installer-selinux-data-dir.sh
       mode: 0754
       overwrite: true
       contents:
         inline: |
           #!/bin/bash -eu
-          K3S_DATA_DIR=${var.config.data_dir}
+          K3S_DATA_DIR=${var.data_dir}
           if [ ! "$(ls -A "$K3S_DATA_DIR=")" ]; then
               echo "$K3S_DATA_DIR is empty, setting SELinux context"
               mkdir -p "$K3S_DATA_DIR/storage"
@@ -282,8 +264,8 @@ storage:
             chmod 0544 /usr/local/bin/kustomize
           fi
 
-          mkdir -p ${var.config.data_dir}/server/manifests
-          kustomize build /var/opt/fleetlock > ${var.config.data_dir}/server/manifests/fleetlock.yaml
+          mkdir -p ${var.data_dir}/server/manifests
+          kustomize build /var/opt/fleetlock > ${var.data_dir}/server/manifests/fleetlock.yaml
     %{~endif~}
     %{~endif~}
     %{~if var.kubelet_config.content != ""~}
@@ -317,11 +299,11 @@ storage:
         inline: |
           [rancher-k3s-common]
           name=Rancher K3s Common)
-          baseurl=${var.config.repo_baseurl}
-          enabled=${var.config.testing_repo ? "0" : "1"}
+          baseurl=${var.repo_baseurl}
+          enabled=${var.testing_repo ? "0" : "1"}
           gpgcheck=1
           repo_gpgcheck=0
-          gpgkey=${var.config.repo_gpgkey}
+          gpgkey=${var.repo_gpgkey}
     - path: /etc/yum.repos.d/rancher-k3s-common-testing.repo
       mode: 0644
       overwrite: true
@@ -329,11 +311,11 @@ storage:
         inline: |
           [rancher-k3s-common-testing]
           name=Rancher K3s Common Testing)
-          baseurl=${var.config.testing_repo_baseurl}
-          enabled=${var.config.testing_repo ? "1" : "0"}
+          baseurl=${var.testing_repo_baseurl}
+          enabled=${var.testing_repo ? "1" : "0"}
           gpgcheck=1
           repo_gpgcheck=0
-          gpgkey=${var.config.testing_repo_gpgkey}
+          gpgkey=${var.testing_repo_gpgkey}
     %{~if var.secret_encryption_key != "" && contains(["bootstrap", "server"], var.mode)~}
     - path: ${local.k3s_secret_encryption_path}
       mode: 0600

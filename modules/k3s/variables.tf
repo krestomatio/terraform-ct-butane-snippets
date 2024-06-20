@@ -19,41 +19,81 @@ variable "mode" {
   }
 }
 
-variable "config" {
-  type = object(
-    {
-      envvars              = optional(list(string), [])
-      parameters           = optional(list(string), [])
-      selinux              = optional(bool, true)
-      data_dir             = optional(string, "/var/lib/rancher/k3s")
-      script_url           = optional(string, "https://raw.githubusercontent.com/k3s-io/k3s/3e948aa0d5be96a47555e51d54dc2110fa2f7fac/install.sh")
-      script_sha256sum     = optional(string, "3ce239d57d43b2d836d2b561043433e6decae8b9dc41f5d13908c0fafb0340cd")
-      repo_baseurl         = optional(string, "https://rpm.rancher.io/k3s/stable/common/coreos/noarch/")
-      repo_gpgkey          = optional(string, "https://rpm.rancher.io/public.key")
-      testing_repo         = optional(bool, false)
-      testing_repo_baseurl = optional(string, "https://rpm-testing.rancher.io/k3s/testing/common/coreos/noarch/")
-      testing_repo_gpgkey  = optional(string, "https://rpm-testing.rancher.io/public.key")
-    }
-  )
-  description = "K3s configuration"
-  default = {
-    envvars              = []
-    parameters           = []
-    data_dir             = "/var/lib/rancher/k3s"
-    selinux              = true
-    script_url           = "https://raw.githubusercontent.com/k3s-io/k3s/7e59376bb91d451d3eaf16b9a3f80ae4d711b2bc/install.sh"
-    script_sha256sum     = "88152dfac36254d75dd814d52960fd61574e35bc47d8c61f377496a7580414f3"
-    repo_baseurl         = "https://rpm.rancher.io/k3s/stable/common/coreos/noarch/"
-    repo_gpgkey          = "https://rpm.rancher.io/public.key"
-    testing_repo         = false
-    testing_repo_baseurl = "https://rpm-testing.rancher.io/k3s/testing/common/coreos/noarch/"
-    testing_repo_gpgkey  = "https://rpm-testing.rancher.io/public.key"
-  }
-  nullable = false
-  validation {
-    condition     = var.config.selinux ? can(regex("^/var/lib/rancher/k3s$", var.config.data_dir)) : true
-    error_message = "Using a custom --data-dir under SELinux is not supported"
-  }
+variable "selinux" {
+  type        = bool
+  description = "K3s install with selinux enabled"
+  default     = true
+  nullable    = false
+}
+
+variable "data_dir" {
+  type        = string
+  description = "K3s data directory"
+  default     = "/var/lib/rancher/k3s"
+  nullable    = false
+}
+
+variable "script_url" {
+  type        = string
+  description = "K3s script URL"
+  default     = "https://raw.githubusercontent.com/k3s-io/k3s/7e59376bb91d451d3eaf16b9a3f80ae4d711b2bc/install.sh"
+  nullable    = false
+}
+
+variable "script_sha256sum" {
+  type        = string
+  description = "K3s script SHA256 sum"
+  default     = "88152dfac36254d75dd814d52960fd61574e35bc47d8c61f377496a7580414f3"
+  nullable    = false
+}
+
+variable "script_envvars" {
+  type        = list(string)
+  description = "K3s script environment variables"
+  default     = []
+  nullable    = false
+}
+
+variable "script_parameters" {
+  type        = list(string)
+  description = "K3s script install parameters"
+  default     = []
+  nullable    = false
+}
+
+variable "repo_baseurl" {
+  type        = string
+  description = "K3s repository base URL"
+  default     = "https://rpm.rancher.io/k3s/stable/common/coreos/noarch/"
+  nullable    = false
+}
+
+variable "repo_gpgkey" {
+  type        = string
+  description = "K3s repository GPG key"
+  default     = "https://rpm.rancher.io/public.key"
+  nullable    = false
+}
+
+variable "testing_repo" {
+  type        = bool
+  description = "K3s Enable testing repository"
+  default     = false
+  nullable    = false
+}
+
+variable "testing_repo_baseurl" {
+  type        = string
+  description = "Testing repository base URL"
+  default     = "https://rpm-testing.rancher.io/k3s/testing/common/coreos/noarch/"
+  nullable    = false
+}
+
+variable "testing_repo_gpgkey" {
+  type        = string
+  description = "Testing repository GPG key"
+  default     = "https://rpm-testing.rancher.io/public.key"
+  nullable    = false
 }
 
 variable "fleetlock" {
@@ -216,14 +256,4 @@ variable "post_install_script_snippet" {
   description = "Snippet to add to the post-install script"
   nullable    = false
 
-}
-
-variable "provider_id_from" {
-  type        = string
-  default     = null
-  description = "Use a predefined snippet according to cloud provider to get the provider ID for the instance"
-  validation {
-    condition     = var.provider_id_from == null || contains(["aws"], var.provider_id_from)
-    error_message = "Invalid input, options: \"aws\""
-  }
 }
