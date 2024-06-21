@@ -1,11 +1,13 @@
 locals {
-  kubectl_server_option          = var.origin_server != "" ? "--server ${var.origin_server}" : ""
-  k3s_shutdown_cordon_state_file = "${var.data_dir}/k3s-uncordon.todo"
-  k3s_service_name               = var.mode == "agent" ? "k3s-agent.service" : "k3s.service"
-  k3s_install_service_env_file   = "/etc/systemd/system/${var.install_service_name}.env"
-  k3s_kubelet_kubeconfig         = "${var.data_dir}/agent/kubelet.kubeconfig"
-  k3s_etcd_dir                   = "${var.data_dir}/server/db/etcd"
-  k3s_secret_encryption_path     = "${var.data_dir}/server/cred/encryption-config.json"
+  kubectl_server_option              = var.origin_server != "" ? "--server ${var.origin_server}" : ""
+  k3s_shutdown_cordon_state_file     = "${var.data_dir}/k3s-uncordon.todo"
+  k3s_service_name                   = var.mode == "agent" ? "k3s-agent.service" : "k3s.service"
+  k3s_install_service_env_file       = "/etc/systemd/system/${var.install_service_name}.env"
+  k3s_shutdown_service_name          = "shutdown-${local.k3s_service_name}"
+  k3s_shutdown_uncordon_service_name = "shutdown-uncordon-${local.k3s_service_name}"
+  k3s_kubelet_kubeconfig             = "${var.data_dir}/agent/kubelet.kubeconfig"
+  k3s_etcd_dir                       = "${var.data_dir}/server/db/etcd"
+  k3s_secret_encryption_path         = "${var.data_dir}/server/cred/encryption-config.json"
 }
 
 data "template_file" "butane_snippet_install_k3s" {
@@ -92,6 +94,11 @@ storage:
           ${indent(10, var.install_script_snippet)}
           %{~endif~}
 
+          if [ -n "$K3S_NODE_NAME" ]; then
+            sed -i "s@^K3S_NODE_NAME=.*@K3S_NODE_NAME=$K3S_NODE_NAME@" \
+              /usr/local/bin/k3s-shutdown.sh /usr/local/bin/k3s-uncordon-node.sh
+          fi
+
           /usr/local/bin/k3s-installer.sh ${contains(["bootstrap", "server"], var.mode) ? "server" : "agent"} \
             %{~if var.kubelet_config.content != ""~}
             --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml' \
@@ -119,12 +126,15 @@ storage:
       contents:
         inline: |
           #!/bin/bash
+
+          K3S_NODE_NAME="$(hostname -f)"
+
           export KUBECONFIG=$$${KUBECONFIG:-${local.k3s_kubelet_kubeconfig}}
           if /usr/bin/systemctl is-active --quiet ${local.k3s_service_name}; then
             %{~if var.shutdown.drain~}
-            already_cordoned="$(/usr/local/bin/k3s kubectl ${local.kubectl_server_option} get node "$(hostname -f)" -o jsonpath='{.spec.unschedulable}')"
+            already_cordoned="$(/usr/local/bin/k3s kubectl ${local.kubectl_server_option} get node "$K3S_NODE_NAME" -o jsonpath='{.spec.unschedulable}')"
             /usr/local/bin/k3s kubectl ${local.kubectl_server_option} \
-              drain "$(hostname -f)" \
+              drain "$K3S_NODE_NAME" \
               %{~if var.shutdown.drain_timeout != "0"~}
               --timeout=${var.shutdown.drain_timeout} \
               %{~endif~}
@@ -152,9 +162,12 @@ storage:
       contents:
         inline: |
           #!/bin/bash
+
+          K3S_NODE_NAME="$(hostname -f)"
+
           export KUBECONFIG=$$${KUBECONFIG:-${local.k3s_kubelet_kubeconfig}}
           /usr/local/bin/k3s kubectl ${local.kubectl_server_option}  \
-            uncordon $(hostname -f)
+            uncordon "$K3S_NODE_NAME"
     %{~endif~}
     %{~if var.selinux~}
     - path: /usr/local/bin/k3s-installer-selinux-data-dir.sh
@@ -326,7 +339,7 @@ storage:
 systemd:
   units:
     %{~if var.shutdown.service~}
-    - name: shutdown-${local.k3s_service_name}
+    - name: ${local.k3s_shutdown_service_name}
       enabled: true
       contents: |
         [Unit]
@@ -342,11 +355,13 @@ systemd:
 
         [Service]
         Type=oneshot
+        RemainAfterExit=yes
+        Restart=no
         ExecStart=-/usr/local/bin/k3s-shutdown.sh
 
         [Install]
         WantedBy=shutdown.target
-    - name: shutdown-uncordon-${local.k3s_service_name}
+    - name: ${local.k3s_shutdown_uncordon_service_name}
       enabled: true
       contents: |
         [Unit]
