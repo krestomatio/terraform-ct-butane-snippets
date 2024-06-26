@@ -173,21 +173,15 @@ storage:
             oidc_sc_existing_key_file_content=$(cat "$oidc_sc_signing_key_file" | tr -d '\r\n')
             oidc_sc_key_file_content=$(cat "$oidc_sc_key_file" | tr -d '\r\n')
 
-            # Check if existing key file exists
-            if [ -f "$oidc_sc_existing_key_file" ]; then
-              # Remove newline characters from content for comparison
-              oidc_sc_existing_key_file_content=$(cat "$oidc_sc_signing_key_file" | tr -d '\r\n')
-              oidc_sc_key_file_content=$(cat "$oidc_sc_key_file" | tr -d '\r\n')
-
-              # Check if current key content is already in service key file
-              if [[ "$oidc_sc_key_file_content" == *"$oidc_sc_existing_key_file_content"* ]]; then
-                echo "Existing key is already in the service key file."
-              else
-                # Append existing key to service key file
-                cat "$oidc_sc_existing_key_file" >> "$oidc_sc_key_file"
-                echo "Appended existing key to service key file."
-              fi
+            # Check if current key content is already in service key file
+            if [[ "$oidc_sc_key_file_content" == *"$oidc_sc_existing_key_file_content"* ]]; then
+              echo "Existing key is already in the service key file."
+            else
+              # Append existing key to service key file
+              cat "$oidc_sc_existing_key_file" >> "$oidc_sc_key_file"
+              echo "Appended existing key to service key file."
             fi
+          fi
 
           if [ -f "$oidc_sc_key_file" ]; then
             # Remove newline characters from content for comparison
