@@ -255,5 +255,17 @@ variable "post_install_script_snippet" {
   default     = ""
   description = "Snippet to add to the post-install script"
   nullable    = false
+}
 
+variable "oidc_sc" {
+  type = object(
+    {
+      jwks_uri    = string
+      issuer      = string
+      signing_key = string
+    }
+  )
+  description = "OIDC provider config for generating service accounts"
+  sensitive   = true
+  default     = null
 }

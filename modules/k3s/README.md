@@ -33,6 +33,7 @@ No modules.
 | <a name="input_install_service_name"></a> [install\_service\_name](#input\_install\_service\_name) | Name of the K3s install service | `string` | `"install-k3s.service"` | no |
 | <a name="input_kubelet_config"></a> [kubelet\_config](#input\_kubelet\_config) | Contains the configuration for the Kubelet | <pre>object(<br>    {<br>      version = optional(string, "v1beta1")<br>      content = optional(string, "")<br>    }<br>  )</pre> | <pre>{<br>  "content": "",<br>  "version": "v1beta1"<br>}</pre> | no |
 | <a name="input_mode"></a> [mode](#input\_mode) | K3s installation mode:<br>"bootstrap": bootstrap a cluster, then be a server<br>"server": start a server<br>"agent": start an agent | `string` | `"bootstrap"` | no |
+| <a name="input_oidc_sc"></a> [oidc\_sc](#input\_oidc\_sc) | OIDC provider config for generating service accounts | <pre>object(<br>    {<br>      jwks_uri    = string<br>      issuer      = string<br>      signing_key = string<br>    }<br>  )</pre> | `null` | no |
 | <a name="input_origin_server"></a> [origin\_server](#input\_origin\_server) | Server host to connect nodes to (ex: https://example:6443) | `string` | `""` | no |
 | <a name="input_post_install_script_snippet"></a> [post\_install\_script\_snippet](#input\_post\_install\_script\_snippet) | Snippet to add to the post-install script | `string` | `""` | no |
 | <a name="input_pre_install_script_snippet"></a> [pre\_install\_script\_snippet](#input\_pre\_install\_script\_snippet) | Snippet to add to the pre-install script | `string` | `""` | no |

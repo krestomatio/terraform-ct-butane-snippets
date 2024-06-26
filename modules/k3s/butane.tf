@@ -8,6 +8,14 @@ locals {
   k3s_kubelet_kubeconfig             = "${var.data_dir}/agent/kubelet.kubeconfig"
   k3s_etcd_dir                       = "${var.data_dir}/server/db/etcd"
   k3s_secret_encryption_path         = "${var.data_dir}/server/cred/encryption-config.json"
+  is_server_bootstrap                = var.mode == "bootstrap"
+  is_server                          = contains(["bootstrap", "server"], var.mode)
+  is_server_not_bootstrap            = var.mode == "server"
+  is_agent                           = var.mode == "agent"
+  k3s_opt_data_dir                   = "/var/opt/rancher/k3s"
+  oidc_sc_signing_key_dir            = "${local.k3s_opt_data_dir}/server/tls"
+  oidc_sc_signing_key_file           = "${local.oidc_sc_signing_key_dir}/oidc-sc-signing.key"
+  oidc_sc_key_file                   = "${local.oidc_sc_signing_key_dir}/service.key"
 }
 
 data "template_file" "butane_snippet_install_k3s" {
@@ -16,6 +24,11 @@ data "template_file" "butane_snippet_install_k3s" {
 variant: fcos
 version: 1.4.0
 storage:
+  %{~if local.is_server && var.oidc_sc != null~}
+  directories:
+    - path: ${local.k3s_opt_data_dir}/server/tls
+      mode: 0700
+  %{~endif~}
   files:
     - path: /var/lib/additional-rpms.list
       overwrite: false
@@ -31,10 +44,13 @@ storage:
           %{~if var.selinux~}
           /usr/local/bin/k3s-installer-selinux-data-dir.sh
           %{~endif~}
-          %{~if contains(["server", "agent"], var.mode)~}
+          %{~if local.is_server && var.oidc_sc != null~}
+          /usr/local/bin/k3s-installer-service-account-key.sh
+          %{~endif~}
+          %{~if !local.is_server_bootstrap~}
           /usr/local/bin/k3s-installer-wait-bootstrap-server.sh
           %{~endif~}
-          %{~if var.fleetlock != null && contains(["bootstrap"], var.mode)~}
+          %{~if var.fleetlock != null && local.is_server_bootstrap~}
           /usr/local/bin/fleetlock-addon-installer.sh
           %{~endif~}
           %{~if var.pre_install_script_snippet != ""~}
@@ -76,7 +92,7 @@ storage:
           export K3S_TOKEN=$$${K3S_TOKEN:-${var.token}}
           %{~endif~}
           %{~endif~}
-          %{~if contains(["bootstrap"], var.mode)~}
+          %{~if local.is_server_bootstrap~}
           if [[ -d "${local.k3s_etcd_dir}" && "$(ls -A "${local.k3s_etcd_dir}")" ]]; then
             export K3S_URL=$$${K3S_URL:-${var.origin_server}}
           else
@@ -99,9 +115,16 @@ storage:
               /usr/local/bin/k3s-shutdown.sh /usr/local/bin/k3s-uncordon-node.sh
           fi
 
-          /usr/local/bin/k3s-installer.sh ${contains(["bootstrap", "server"], var.mode) ? "server" : "agent"} \
+          /usr/local/bin/k3s-installer.sh ${local.is_server ? "server" : "agent"} \
             %{~if var.kubelet_config.content != ""~}
             --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml' \
+            %{~endif~}
+            %{~if var.oidc_sc != null~}
+            --kube-apiserver-arg=service-account-key-file=${local.oidc_sc_key_file} \
+            --kube-apiserver-arg=service-account-signing-key-file=${local.oidc_sc_signing_key_file} \
+            --kube-apiserver-arg=service-account-issuer=${var.oidc_sc.issuer} \
+            --kube-apiserver-arg=service-account-jwks-uri=${var.oidc_sc.jwks_uri} \
+            --kube-apiserver-arg=api-audiences=${var.oidc_sc.issuer},https://kubernetes.default.svc.cluster.local,k3s \
             %{~endif~}
             %{~for parameter in var.script_parameters~}
             ${parameter} \
@@ -119,6 +142,75 @@ storage:
           %{~if var.post_install_script_snippet != ""~}
           ${indent(10, var.post_install_script_snippet)}
           %{~endif~}
+    %{~if local.is_server && var.oidc_sc != null~}
+    - path: ${local.oidc_sc_signing_key_file}
+      mode: 0600
+      overwrite: true
+      contents:
+        inline: |
+          ${indent(10, sensitive(var.oidc_sc.signing_key))}
+    - path: /usr/local/bin/k3s-installer-service-account-key.sh
+      mode: 0754
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash -eu
+
+          # Define paths and variables
+          oidc_sc_signing_key_file="${local.oidc_sc_signing_key_file}"
+          oidc_sc_key_file="${local.oidc_sc_key_file}"
+          oidc_sc_existing_key_file="${var.data_dir}/server/tls/service.key"
+
+          # Check if original current key file exists
+          if [ ! -f "$oidc_sc_signing_key_file" ]; then
+            echo "Service original current key file does not exist."
+            exit 1
+          fi
+
+          # Check if existing key file exists
+          if [ -f "$oidc_sc_existing_key_file" ]; then
+            # Remove newline characters from content for comparison
+            oidc_sc_existing_key_file_content=$(cat "$oidc_sc_signing_key_file" | tr -d '\r\n')
+            oidc_sc_key_file_content=$(cat "$oidc_sc_key_file" | tr -d '\r\n')
+
+            # Check if existing key file exists
+            if [ -f "$oidc_sc_existing_key_file" ]; then
+              # Remove newline characters from content for comparison
+              oidc_sc_existing_key_file_content=$(cat "$oidc_sc_signing_key_file" | tr -d '\r\n')
+              oidc_sc_key_file_content=$(cat "$oidc_sc_key_file" | tr -d '\r\n')
+
+              # Check if current key content is already in service key file
+              if [[ "$oidc_sc_key_file_content" == *"$oidc_sc_existing_key_file_content"* ]]; then
+                echo "Existing key is already in the service key file."
+              else
+                # Append existing key to service key file
+                cat "$oidc_sc_existing_key_file" >> "$oidc_sc_key_file"
+                echo "Appended existing key to service key file."
+              fi
+            fi
+
+          if [ -f "$oidc_sc_key_file" ]; then
+            # Remove newline characters from content for comparison
+            oidc_sc_signing_key_file_content=$(cat "$oidc_sc_signing_key_file" | tr -d '\r\n')
+            oidc_sc_key_file_content=$(cat "$oidc_sc_key_file" | tr -d '\r\n')
+
+            # Check if current key content is already in service key file
+            if [[ "$oidc_sc_key_file_content" == *"$oidc_sc_signing_key_file_content"* ]]; then
+              echo "Current key is already in the service key file."
+            else
+              # Append current key to service key file
+              echo "$(cat "$oidc_sc_signing_key_file" "$oidc_sc_key_file")" >| "$oidc_sc_key_file"
+              echo "Appended current key to service key file."
+            fi
+          else
+            # Create service key file, appending current key
+            cat "$oidc_sc_signing_key_file" >| "$oidc_sc_key_file"
+            echo "Created service key file."
+          fi
+
+          chmod 0600 "$oidc_sc_key_file"
+          chmod 0600 "$oidc_sc_signing_key_file"
+    %{~endif~}
     %{~if var.shutdown.service~}
     - path: /usr/local/bin/k3s-shutdown.sh
       mode: 0754
@@ -177,10 +269,10 @@ storage:
         inline: |
           #!/bin/bash -eu
           K3S_DATA_DIR=${var.data_dir}
-          if [ ! "$(ls -A "$K3S_DATA_DIR=")" ]; then
-              echo "$K3S_DATA_DIR is empty, setting SELinux context"
+          if [[ -d "$K3S_DATA_DIR" && ! -f "$K3S_DATA_DIR/.selinux" ]]; then
               mkdir -p "$K3S_DATA_DIR/storage"
               restorecon -R "$K3S_DATA_DIR"
+              touch "$K3S_DATA_DIR/.selinux"
           fi
     %{~endif~}
     %{~if var.fleetlock != null~}
@@ -193,7 +285,7 @@ storage:
           strategy = "fleet_lock"
           [updates.fleet_lock]
           base_url = "http://${var.fleetlock.cluster_ip}"
-    %{~if contains(["bootstrap"], var.mode)~}
+    %{~if local.is_server_bootstrap~}
     - path: /var/opt/fleetlock/namespace.yaml
       mode: 0644
       overwrite: true
@@ -291,7 +383,7 @@ storage:
           kind: KubeletConfiguration
           ${indent(10, var.kubelet_config.content)}
     %{~endif~}
-    %{~if contains(["server", "agent"], var.mode)~}
+    %{~if !local.is_server_bootstrap~}
     - path: /usr/local/bin/k3s-installer-wait-bootstrap-server.sh
       mode: 0754
       overwrite: true
@@ -329,7 +421,7 @@ storage:
           gpgcheck=1
           repo_gpgcheck=0
           gpgkey=${var.testing_repo_gpgkey}
-    %{~if var.secret_encryption_key != "" && contains(["bootstrap", "server"], var.mode)~}
+    %{~if var.secret_encryption_key != "" && local.is_server~}
     - path: ${local.k3s_secret_encryption_path}
       mode: 0600
       contents:
@@ -416,7 +508,7 @@ systemd:
         ConditionPathExists=/usr/local/bin/k3s-post-installer.sh
         ConditionPathExists=/etc/yum.repos.d/rancher-k3s-common.repo
         ConditionPathExists=!/var/lib/%N.done
-        %{~if contains(["server", "agent"], var.mode)~}
+        %{~if !local.is_server_bootstrap~}
         ConditionPathExists=/usr/local/bin/k3s-installer-wait-bootstrap-server.sh
         %{~endif~}
         StartLimitInterval=200
@@ -427,7 +519,7 @@ systemd:
         RemainAfterExit=yes
         Restart=on-failure
         RestartSec=60
-        TimeoutStartSec=${contains(["bootstrap"], var.mode) ? "120" : "180"}
+        TimeoutStartSec=${local.is_server_bootstrap ? "120" : "180"}
         EnvironmentFile=-${local.k3s_install_service_env_file}
         ExecStartPre=/usr/local/bin/k3s-pre-installer.sh
         ExecStart=/usr/local/bin/install-k3s.sh
