@@ -260,9 +260,10 @@ variable "post_install_script_snippet" {
 variable "oidc_sc" {
   type = object(
     {
-      jwks_uri    = string
-      issuer      = string
-      signing_key = string
+      jwks_uri      = string
+      issuer        = string
+      signing_key   = string
+      api_audiences = optional(string, "https://kubernetes.default.svc.cluster.local,k3s")
     }
   )
   description = "OIDC provider config for generating service accounts"
