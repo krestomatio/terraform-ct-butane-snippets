@@ -123,7 +123,9 @@ storage:
             --kube-apiserver-arg=service-account-key-file=${local.oidc_sc_key_file} \
             --kube-apiserver-arg=service-account-signing-key-file=${local.oidc_sc_signing_key_file} \
             --kube-apiserver-arg=service-account-issuer=${var.oidc_sc.issuer} \
+            %{~if var.oidc_sc.jwks_uri != ""~}
             --kube-apiserver-arg=service-account-jwks-uri=${var.oidc_sc.jwks_uri} \
+            %{~endif~}
             --kube-apiserver-arg=api-audiences=${var.oidc_sc.api_audiences} \
             %{~endif~}
             %{~for parameter in var.script_parameters~}
