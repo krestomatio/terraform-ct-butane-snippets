@@ -42,9 +42,10 @@ variable "install_script" {
   )
   description = "K3s script URL"
   default = {
-    url       = "https://raw.githubusercontent.com/k3s-io/k3s/7e59376bb91d451d3eaf16b9a3f80ae4d711b2bc/install.sh"
-    sha256sum = "88152dfac36254d75dd814d52960fd61574e35bc47d8c61f377496a7580414f3"
+    url       = "https://raw.githubusercontent.com/k3s-io/k3s/b4b156d9d14eeb475e789718b3a6b78aba00019e/install.sh"
+    sha256sum = "3ce239d57d43b2d836d2b561043433e6decae8b9dc41f5d13908c0fafb0340cd"
   }
+  nullable = false
 }
 
 variable "script_envvars" {
