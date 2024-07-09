@@ -60,9 +60,9 @@ storage:
       mode: 0700
       overwrite: true
       contents:
-        source: ${var.script_url}
+        source: ${var.install_script.url}
         verification:
-          hash: sha256-${var.script_sha256sum}
+          hash: sha256-${var.install_script.sha256sum}
     - path: /usr/local/bin/install-k3s.sh
       mode: 0700
       overwrite: true

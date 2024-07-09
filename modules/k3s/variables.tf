@@ -33,18 +33,18 @@ variable "data_dir" {
   nullable    = false
 }
 
-variable "script_url" {
-  type        = string
+variable "install_script" {
+  type = object(
+    {
+      url       = string
+      sha256sum = string
+    }
+  )
   description = "K3s script URL"
-  default     = "https://raw.githubusercontent.com/k3s-io/k3s/7e59376bb91d451d3eaf16b9a3f80ae4d711b2bc/install.sh"
-  nullable    = false
-}
-
-variable "script_sha256sum" {
-  type        = string
-  description = "K3s script SHA256 sum"
-  default     = "88152dfac36254d75dd814d52960fd61574e35bc47d8c61f377496a7580414f3"
-  nullable    = false
+  default = {
+    url       = "https://raw.githubusercontent.com/k3s-io/k3s/7e59376bb91d451d3eaf16b9a3f80ae4d711b2bc/install.sh"
+    sha256sum = "88152dfac36254d75dd814d52960fd61574e35bc47d8c61f377496a7580414f3"
+  }
 }
 
 variable "script_envvars" {
