@@ -458,18 +458,22 @@ data "template_file" "butane_snippet_disable_zincati" {
 data "template_file" "butane_snippet_kernel_arguments" {
   count = length(var.kernel_arguments) != null ? 1 : 0
 
-  template = <<-TEMPLATE
-    ---
-    variant: fcos
-    version: 1.4.0
-    kernel_arguments:
-      should_exist:
-      %{~for should_exist_argument in var.kernel_arguments.should_exist~}
-      - ${should_exist_argument}
-      %{~endfor~}
-      should_not_exist:
-      %{~for should_not_exist_argument in var.kernel_arguments.should_not_exist~}
-      - ${should_not_exist_argument}
-      %{~endfor~}
-  TEMPLATE
+  template = <<TEMPLATE
+---
+variant: fcos
+version: 1.4.0
+kernel_arguments:
+  %{~if var.kernel_arguments.should_exist != []~}
+  should_exist:
+    %{~for should_exist_argument in var.kernel_arguments.should_exist~}
+    - ${should_exist_argument}
+    %{~endfor~}
+  %{~endif~}
+  %{~if var.kernel_arguments.should_not_exist != []~}
+  should_not_exist:
+    %{~for should_not_exist_argument in var.kernel_arguments.should_not_exist~}
+    - ${should_not_exist_argument}
+    %{~endfor~}
+  %{~endif~}
+TEMPLATE
 }
