@@ -27,6 +27,7 @@ No modules.
 | [template_file.butane_snippet_grub_password_hash](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_hostname](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_init_config_script](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
+| [template_file.butane_snippet_kernel_arguments](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_keymap](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_periodic_updates](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_rollout_wariness](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
@@ -52,6 +53,7 @@ No modules.
 | <a name="input_hostname"></a> [hostname](#input\_hostname) | Hostname | `string` | `""` | no |
 | <a name="input_init_config_script"></a> [init\_config\_script](#input\_init\_config\_script) | Content to include in a init config script. It runs after additional rpms are installed | `string` | `""` | no |
 | <a name="input_interface_name"></a> [interface\_name](#input\_interface\_name) | Network interface name | `string` | `"ens3"` | no |
+| <a name="input_kernel_arguments"></a> [kernel\_arguments](#input\_kernel\_arguments) | Kernel arguments to add or remove | <pre>object(<br>    {<br>      should_exist     = optional(list(string), [])<br>      should_not_exist = optional(list(string), [])<br>    }<br>  )</pre> | `null` | no |
 | <a name="input_keymap"></a> [keymap](#input\_keymap) | Keymap | `string` | `""` | no |
 | <a name="input_nameservers"></a> [nameservers](#input\_nameservers) | List of nameservers for VMs | `list(string)` | `[]` | no |
 | <a name="input_periodic_updates"></a> [periodic\_updates](#input\_periodic\_updates) | Only reboot for updates during certain timeframes<br>{<br>  time\_zone = "localtime"<br>  windows = [<br>    {<br>      days           = ["Sat"],<br>      start\_time     = "23:30",<br>      length\_minutes = "60"<br>    },<br>    {<br>      days           = ["Sun"],<br>      start\_time     = "00:30",<br>      length\_minutes = "60"<br>    }<br>  ]<br>} | <pre>object(<br>    {<br>      time_zone = optional(string, "")<br>      windows = list(<br>        object(<br>          {<br>            days           = list(string)<br>            start_time     = string<br>            length_minutes = string<br>          }<br>        )<br>      )<br>    }<br>  )</pre> | `null` | no |
@@ -76,6 +78,7 @@ No modules.
 | <a name="output_grub_password_hash"></a> [grub\_password\_hash](#output\_grub\_password\_hash) | Butane snipped to set a grub2 password |
 | <a name="output_hostname"></a> [hostname](#output\_hostname) | Butante snippet to set hostname |
 | <a name="output_init_config_script"></a> [init\_config\_script](#output\_init\_config\_script) | Butante snippet to set a init config script |
+| <a name="output_kernel_arguments"></a> [kernel\_arguments](#output\_kernel\_arguments) | Butante snippet to set kernel arguments |
 | <a name="output_keymap"></a> [keymap](#output\_keymap) | Butante snippet to set keymap |
 | <a name="output_periodic_updates"></a> [periodic\_updates](#output\_periodic\_updates) | Butante snippet to set updates periodic window |
 | <a name="output_rollout_wariness"></a> [rollout\_wariness](#output\_rollout\_wariness) | Butane snipped to set rollout wariness |

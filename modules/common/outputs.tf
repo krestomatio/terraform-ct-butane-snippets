@@ -87,3 +87,8 @@ output "disable_zincati" {
   description = "Butante snippet to disable zincati"
   value       = try(data.template_file.butane_snippet_disable_zincati[0].rendered, "")
 }
+
+output "kernel_arguments" {
+  description = "Butante snippet to set kernel arguments"
+  value       = try(data.template_file.butane_snippet_kernel_arguments[0].rendered, "")
+}

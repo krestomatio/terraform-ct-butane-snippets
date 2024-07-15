@@ -231,3 +231,14 @@ variable "disable_zincati" {
   default     = false
   nullable    = false
 }
+
+variable "kernel_arguments" {
+  type = object(
+    {
+      should_exist     = optional(list(string), [])
+      should_not_exist = optional(list(string), [])
+    }
+  )
+  description = "Kernel arguments to add or remove"
+  default     = null
+}
