@@ -254,8 +254,24 @@ storage:
           K3S_NODE_NAME="$(hostname -f)"
 
           export KUBECONFIG=$$${KUBECONFIG:-${local.k3s_kubelet_kubeconfig}}
-          /usr/local/bin/k3s kubectl ${local.kubectl_server_option}  \
-            uncordon "$K3S_NODE_NAME"
+
+          is_node_ready() {
+            /usr/local/bin/k3s kubectl ${local.kubectl_server_option} \
+              wait node --for condition=Ready --timeout=1m "$K3S_NODE_NAME"
+          }
+
+          uncordon_node() {
+            /usr/local/bin/k3s kubectl ${local.kubectl_server_option}  \
+              uncordon "$K3S_NODE_NAME"
+          }
+
+          for i in {1..5}; do
+            if is_node_ready; then
+              uncordon_node
+              break
+            fi
+            sleep 5
+          done
     %{~endif~}
     %{~if var.selinux~}
     - path: /usr/local/bin/k3s-installer-selinux-data-dir.sh
