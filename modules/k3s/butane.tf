@@ -357,12 +357,16 @@ storage:
                     %{~if length(var.fleetlock.tolerations) > 0~}
                     tolerations:
                     %{~for toleration in var.fleetlock.tolerations~}
-                    - key: "${toleration.key}"
-                      operator: "${toleration.operator}"
-                      %{~if toleration.value != null~}
+                    - operator: "${toleration.operator}"
+                      %{~if toleration.key != ""~}
+                      key: "${toleration.key}"
+                      %{~endif~}
+                      %{~if toleration.value != ""~}
                       value: "${toleration.value}"
                       %{~endif~}
+                      %{~if toleration.effect != ""~}
                       effect: "${toleration.effect}"
+                      %{~endif~}
                     %{~endfor~}
                     %{~endif~}
           %{~endif~}

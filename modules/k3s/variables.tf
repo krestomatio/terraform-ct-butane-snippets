@@ -110,10 +110,10 @@ variable "fleetlock" {
         list(
           object(
             {
-              key      = string
-              operator = string
-              value    = optional(string)
-              effect   = string
+              key      = optional(string, "")
+              operator = optional(string, "Equal")
+              value    = optional(string, "")
+              effect   = optional(string, "")
             }
           )
         ), []
