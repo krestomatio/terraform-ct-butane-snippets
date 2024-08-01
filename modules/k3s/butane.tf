@@ -341,6 +341,10 @@ storage:
               spec:
                 template:
                   spec:
+                    %{~if var.fleetlock.affinity != ""~}
+                    affinity:
+                      ${indent(22, var.fleetlock.affinity)}
+                    %{~endif~}
                     containers:
                     - name: fleetlock
                       env:
