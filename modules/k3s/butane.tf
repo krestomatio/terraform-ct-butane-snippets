@@ -352,6 +352,10 @@ storage:
                         valueFrom:
                           fieldRef:
                             fieldPath: metadata.namespace
+                        %{~if var.fleetlock.resources != ""~}
+                        resources:
+                          ${indent(24, var.fleetlock.resources)}
+                        %{~endif~}
                     %{~if length(var.fleetlock.node_selectors) > 0~}
                     nodeSelector:
                     %{~for label, value in var.fleetlock.node_selectors~}

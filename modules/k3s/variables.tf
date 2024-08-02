@@ -107,6 +107,7 @@ variable "fleetlock" {
       node_selectors    = optional(list(map(string)), [])
       kustomize_version = optional(string, "5.4.2")
       affinity          = optional(string, "")
+      resources         = optional(string, "")
       tolerations = optional(
         list(
           object(
