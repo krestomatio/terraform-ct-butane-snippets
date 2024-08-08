@@ -30,11 +30,6 @@ storage:
       mode: 0700
   %{~endif~}
   files:
-    - path: /var/lib/additional-rpms.list
-      overwrite: false
-      append:
-        - inline: |
-            k3s-selinux
     - path: /usr/local/bin/k3s-pre-installer.sh
       mode: 0700
       overwrite: true
