@@ -100,7 +100,7 @@ storage:
 
           if [ -d "/usr/bin/k3s" ]; then
             echo "Copying already installed k3s binaries"
-            cp -a /usr/bin/k3s/* /usr/local/bin/
+            cp -p /usr/bin/k3s/* /usr/local/bin/
           fi
 
           if ! [ "$(getenforce)" = "Disabled" ]; then
@@ -112,6 +112,7 @@ storage:
               echo "Setting SELinux context for k3s binary"
               chcon -u system_u -r object_r -t container_runtime_exec_t "/usr/bin/local/k3s"
             fi
+            restorecon -Rv /usr/local/bin
           fi
 
           if [ ! -f ${local.k3s_installer_file} ]; then
