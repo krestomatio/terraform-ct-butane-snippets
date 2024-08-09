@@ -104,14 +104,7 @@ storage:
           fi
 
           if ! [ "$(getenforce)" = "Disabled" ]; then
-            if [ -f "/usr/bin/k3s/k3s" ]; then
-              echo "Setting SELinux context for k3s binary"
-              chcon -u system_u -r object_r -t container_runtime_exec_t "/usr/bin/k3s/k3s"
-            fi
-            if [ -f "/usr/bin/local/k3s" ]; then
-              echo "Setting SELinux context for k3s binary"
-              chcon -u system_u -r object_r -t container_runtime_exec_t "/usr/bin/local/k3s"
-            fi
+            echo "Restoring SELinux context for /usr/local/bin"
             restorecon -Rv /usr/local/bin
           fi
 
