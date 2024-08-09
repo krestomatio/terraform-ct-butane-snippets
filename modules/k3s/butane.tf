@@ -37,13 +37,6 @@ storage:
       contents:
         inline: |
           #!/bin/bash -eu
-          if ! -f ${local.k3s_installer_file}; then
-            echo "Downloading k3s installer"
-            K3S_INSTALLER_SHA256_CHECKSUM="${var.install_script.sha256sum}"
-            curl -sSL "${var.install_script.url}" -o ${local.k3s_installer_file}
-            chmod 0700 ${local.k3s_installer_file}
-            echo "$K3S_INSTALLER_SHA256_CHECKSUM ${local.k3s_installer_file}" | sha256sum --check --status
-          fi
           %{~if var.selinux~}
           /usr/local/bin/k3s-installer-selinux-data-dir.sh
           %{~endif~}
@@ -100,6 +93,18 @@ storage:
           %{~if var.selinux~}
           export K3S_SELINUX=$$${K3S_SELINUX:-true}
           %{~endif~}
+
+          if rpm -q k3s-selinux &>/dev/null; then
+            export INSTALL_K3S_SKIP_SELINUX_RPM=$$${INSTALL_K3S_SKIP_SELINUX_RPM:-true}
+          fi
+
+          if [ ! -f ${local.k3s_installer_file} ]; then
+            echo "Downloading k3s installer"
+            K3S_INSTALLER_SHA256_CHECKSUM="${var.install_script.sha256sum}"
+            curl -sSL "${var.install_script.url}" -o ${local.k3s_installer_file}
+            chmod 0700 ${local.k3s_installer_file}
+            echo "$K3S_INSTALLER_SHA256_CHECKSUM ${local.k3s_installer_file}" | sha256sum --check --status
+          fi
 
           %{~if var.install_script_snippet != ""~}
           # install snippet
