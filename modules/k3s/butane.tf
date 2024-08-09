@@ -115,6 +115,10 @@ storage:
             restorecon -Rv /usr/local/bin
           fi
 
+          if [ -f "/usr/local/bin/k3s" ]; then
+            export INSTALL_K3S_SKIP_DOWNLOAD=$$$${INSTALL_K3S_SKIP_DOWNLOAD:-true}
+          fi
+
           if [ ! -f ${local.k3s_installer_file} ]; then
             echo "Downloading k3s installer"
             K3S_INSTALLER_SHA256_CHECKSUM="${var.install_script.sha256sum}"
