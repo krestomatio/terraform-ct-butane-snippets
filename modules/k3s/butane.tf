@@ -533,7 +533,6 @@ systemd:
         After=${after_unit}
         %{~endfor~}
         ConditionPathExists=/usr/local/bin/k3s-pre-installer.sh
-        ConditionPathExists=${local.k3s_installer_file}
         ConditionPathExists=/usr/local/bin/install-k3s.sh
         ConditionPathExists=/usr/local/bin/k3s-post-installer.sh
         ConditionPathExists=/etc/yum.repos.d/rancher-k3s-common.repo
