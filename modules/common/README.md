@@ -71,7 +71,6 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_additional_rpms"></a> [additional\_rpms](#output\_additional\_rpms) | Butante snippet to install additional rpms unsing rpm-ostree |
-| <a name="output_butane_snippet_rpm_ostree_rebase"></a> [butane\_snippet\_rpm\_ostree\_rebase](#output\_butane\_snippet\_rpm\_ostree\_rebase) | Butante snippet to rebase the system using rpm-ostree |
 | <a name="output_core_authorized_key"></a> [core\_authorized\_key](#output\_core\_authorized\_key) | Butane snipped to set an authorized key for core user |
 | <a name="output_disable_zincati"></a> [disable\_zincati](#output\_disable\_zincati) | Butante snippet to disable zincati |
 | <a name="output_disks"></a> [disks](#output\_disks) | Butante snippet to set storage disks |
@@ -85,6 +84,7 @@ No modules.
 | <a name="output_keymap"></a> [keymap](#output\_keymap) | Butante snippet to set keymap |
 | <a name="output_periodic_updates"></a> [periodic\_updates](#output\_periodic\_updates) | Butante snippet to set updates periodic window |
 | <a name="output_rollout_wariness"></a> [rollout\_wariness](#output\_rollout\_wariness) | Butane snipped to set rollout wariness |
+| <a name="output_rpm_ostree_rebase"></a> [rpm\_ostree\_rebase](#output\_rpm\_ostree\_rebase) | Butante snippet to rebase the system using rpm-ostree |
 | <a name="output_static_interface"></a> [static\_interface](#output\_static\_interface) | Butane snipped to set the static interface |
 | <a name="output_sync_time_with_host"></a> [sync\_time\_with\_host](#output\_sync\_time\_with\_host) | Butante snippet to sync guest time with the kvm host |
 | <a name="output_sysctl"></a> [sysctl](#output\_sysctl) | Butante snippet for tuning kernel by adding to sysctl.d |

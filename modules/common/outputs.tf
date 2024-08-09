@@ -93,7 +93,7 @@ output "kernel_arguments" {
   value       = try(data.template_file.butane_snippet_kernel_arguments[0].rendered, "")
 }
 
-output "butane_snippet_rpm_ostree_rebase" {
+output "rpm_ostree_rebase" {
   description = "Butante snippet to rebase the system using rpm-ostree"
   value       = try(data.template_file.butane_snippet_rpm_ostree_rebase[0].rendered, "")
 }
