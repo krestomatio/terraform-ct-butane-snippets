@@ -503,7 +503,7 @@ systemd:
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStart=/usr/bin/rpm-ostree rebase --bypass-driver --reboot ${rpm_ostree_rebase}
+        ExecStart=/usr/bin/rpm-ostree rebase --bypass-driver --reboot ${var.rpm_ostree_rebase}
         ExecStart=/bin/touch /var/lib/%N.done
         [Install]
         WantedBy=multi-user.target
