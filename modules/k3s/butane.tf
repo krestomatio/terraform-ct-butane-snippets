@@ -109,7 +109,7 @@ storage:
           fi
 
           if [ -f "/usr/local/bin/k3s" ]; then
-            export INSTALL_K3S_SKIP_DOWNLOAD=$$$${INSTALL_K3S_SKIP_DOWNLOAD:-true}
+            export INSTALL_K3S_SKIP_DOWNLOAD=$$${INSTALL_K3S_SKIP_DOWNLOAD:-true}
           fi
 
           if [ ! -f ${local.k3s_installer_file} ]; then
