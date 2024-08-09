@@ -16,7 +16,7 @@ locals {
   oidc_sc_signing_key_dir            = "${local.k3s_opt_data_dir}/server/tls"
   oidc_sc_signing_key_file           = "${local.oidc_sc_signing_key_dir}/oidc-sc-signing.key"
   oidc_sc_key_file                   = "${local.oidc_sc_signing_key_dir}/service.key"
-  k3s_installer_file                 = "/usr/bin/k3s-installer.sh"
+  k3s_installer_file                 = "/usr/local/bin/k3s-installer.sh"
 }
 
 data "template_file" "butane_snippet_install_k3s" {
@@ -96,6 +96,11 @@ storage:
 
           if rpm -q k3s-selinux &>/dev/null; then
             export INSTALL_K3S_SKIP_SELINUX_RPM=$$${INSTALL_K3S_SKIP_SELINUX_RPM:-true}
+          fi
+
+          if [ -d "/usr/bin/k3s" ]; then
+            echo "Copying already installed k3s binaries"
+            cp -p /usr/bin/k3s/* /usr/local/bin/
           fi
 
           if [ ! -f ${local.k3s_installer_file} ]; then
