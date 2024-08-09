@@ -16,6 +16,7 @@ locals {
   oidc_sc_signing_key_dir            = "${local.k3s_opt_data_dir}/server/tls"
   oidc_sc_signing_key_file           = "${local.oidc_sc_signing_key_dir}/oidc-sc-signing.key"
   oidc_sc_key_file                   = "${local.oidc_sc_signing_key_dir}/service.key"
+  k3s_installer_file                 = "/usr/bin/k3s-installer.sh"
 }
 
 data "template_file" "butane_snippet_install_k3s" {
@@ -36,6 +37,13 @@ storage:
       contents:
         inline: |
           #!/bin/bash -eu
+          if ! -f ${local.k3s_installer_file}; then
+            echo "Downloading k3s installer"
+            K3S_INSTALLER_SHA256_CHECKSUM="${var.install_script.sha256sum}"
+            curl -sSL "${var.install_script.url}" -o ${local.k3s_installer_file}
+            chmod 0700 ${local.k3s_installer_file}
+            echo "$K3S_INSTALLER_SHA256_CHECKSUM ${local.k3s_installer_file}" | sha256sum --check --status
+          fi
           %{~if var.selinux~}
           /usr/local/bin/k3s-installer-selinux-data-dir.sh
           %{~endif~}
@@ -51,13 +59,6 @@ storage:
           %{~if var.pre_install_script_snippet != ""~}
           ${indent(10, var.pre_install_script_snippet)}
           %{~endif~}
-    - path: /usr/local/bin/k3s-installer.sh
-      mode: 0700
-      overwrite: true
-      contents:
-        source: ${var.install_script.url}
-        verification:
-          hash: sha256-${var.install_script.sha256sum}
     - path: /usr/local/bin/install-k3s.sh
       mode: 0700
       overwrite: true
@@ -110,7 +111,7 @@ storage:
               /usr/local/bin/k3s-shutdown.sh /usr/local/bin/k3s-uncordon-node.sh
           fi
 
-          /usr/local/bin/k3s-installer.sh ${local.is_server ? "server" : "agent"} \
+          ${local.k3s_installer_file} ${local.is_server ? "server" : "agent"} \
             %{~if var.kubelet_config.content != ""~}
             --kubelet-arg 'config=/etc/rancher/k3s/kubelet-config.yaml' \
             %{~endif~}
@@ -522,7 +523,7 @@ systemd:
         After=${after_unit}
         %{~endfor~}
         ConditionPathExists=/usr/local/bin/k3s-pre-installer.sh
-        ConditionPathExists=/usr/local/bin/k3s-installer.sh
+        ConditionPathExists=${local.k3s_installer_file}
         ConditionPathExists=/usr/local/bin/install-k3s.sh
         ConditionPathExists=/usr/local/bin/k3s-post-installer.sh
         ConditionPathExists=/etc/yum.repos.d/rancher-k3s-common.repo
