@@ -242,3 +242,10 @@ variable "kernel_arguments" {
   description = "Kernel arguments to add or remove"
   default     = null
 }
+
+variable "rpm_ostree_rebase" {
+  type        = string
+  description = "Reference to rebase the system using rpm-ostree and then reboot"
+  default     = ""
+  nullable    = false
+}

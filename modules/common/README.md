@@ -31,6 +31,7 @@ No modules.
 | [template_file.butane_snippet_keymap](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_periodic_updates](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_rollout_wariness](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
+| [template_file.butane_snippet_rpm_ostree_rebase](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_static_interface](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_sync_time_with_host](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
 | [template_file.butane_snippet_sysctl](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) | data source |
@@ -58,6 +59,7 @@ No modules.
 | <a name="input_nameservers"></a> [nameservers](#input\_nameservers) | List of nameservers for VMs | `list(string)` | `[]` | no |
 | <a name="input_periodic_updates"></a> [periodic\_updates](#input\_periodic\_updates) | Only reboot for updates during certain timeframes<br>{<br>  time\_zone = "localtime"<br>  windows = [<br>    {<br>      days           = ["Sat"],<br>      start\_time     = "23:30",<br>      length\_minutes = "60"<br>    },<br>    {<br>      days           = ["Sun"],<br>      start\_time     = "00:30",<br>      length\_minutes = "60"<br>    }<br>  ]<br>} | <pre>object(<br>    {<br>      time_zone = optional(string, "")<br>      windows = list(<br>        object(<br>          {<br>            days           = list(string)<br>            start_time     = string<br>            length_minutes = string<br>          }<br>        )<br>      )<br>    }<br>  )</pre> | `null` | no |
 | <a name="input_rollout_wariness"></a> [rollout\_wariness](#input\_rollout\_wariness) | Wariness to update, 1.0 (very cautious) to 0.0 (very eager) | `string` | `""` | no |
+| <a name="input_rpm_ostree_rebase"></a> [rpm\_ostree\_rebase](#input\_rpm\_ostree\_rebase) | Reference to rebase the system using rpm-ostree and then reboot | `string` | `""` | no |
 | <a name="input_ssh_authorized_key"></a> [ssh\_authorized\_key](#input\_ssh\_authorized\_key) | Authorized ssh key for core user | `string` | `""` | no |
 | <a name="input_sync_time_with_host"></a> [sync\_time\_with\_host](#input\_sync\_time\_with\_host) | Sync guest time with the kvm host | `bool` | `false` | no |
 | <a name="input_sysctl"></a> [sysctl](#input\_sysctl) | Additional kernel tuning in sysctl.d | `map(string)` | `null` | no |
@@ -69,6 +71,7 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_additional_rpms"></a> [additional\_rpms](#output\_additional\_rpms) | Butante snippet to install additional rpms unsing rpm-ostree |
+| <a name="output_butane_snippet_rpm_ostree_rebase"></a> [butane\_snippet\_rpm\_ostree\_rebase](#output\_butane\_snippet\_rpm\_ostree\_rebase) | Butante snippet to rebase the system using rpm-ostree |
 | <a name="output_core_authorized_key"></a> [core\_authorized\_key](#output\_core\_authorized\_key) | Butane snipped to set an authorized key for core user |
 | <a name="output_disable_zincati"></a> [disable\_zincati](#output\_disable\_zincati) | Butante snippet to disable zincati |
 | <a name="output_disks"></a> [disks](#output\_disks) | Butante snippet to set storage disks |

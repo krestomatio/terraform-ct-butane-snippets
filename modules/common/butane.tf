@@ -477,3 +477,35 @@ kernel_arguments:
   %{~endif~}
 TEMPLATE
 }
+
+data "template_file" "butane_snippet_rpm_ostree_rebase" {
+  count = var.rpm_ostree_rebase != "" ? 1 : 0
+
+  template = <<TEMPLATE
+---
+variant: fcos
+version: 1.4.0
+systemd:
+  units:
+    - name: rpm-ostree-rebase.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Rebase rpm-ostree
+        Wants=network-online.target
+        After=network-online.target
+        After=systemd-machine-id-commit.service
+        # We run before `zincati.service` to avoid conflicting rpm-ostree transactions.
+        Before=zincati.service
+        Before=shutdown.target
+        Before=additional-rpms.service
+        ConditionPathExists=!/var/lib/%N.done
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/rpm-ostree rebase --bypass-driver --reboot ${rpm_ostree_rebase}
+        ExecStart=/bin/touch /var/lib/%N.done
+        [Install]
+        WantedBy=multi-user.target
+TEMPLATE
+}
