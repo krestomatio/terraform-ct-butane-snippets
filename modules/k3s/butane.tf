@@ -478,9 +478,10 @@ systemd:
         DefaultDependencies=no
         Wants=network-online.target
         After=network-online.target
+        Wants=${local.k3s_service_name}
         After=${local.k3s_service_name}
-        Requisite=${local.k3s_service_name}
-        Before=shutdown.target
+        After=shutdown.target
+        Before=final.target
         RefuseManualStart=yes
         ConditionPathExists=/usr/local/bin/k3s-shutdown.sh
 
