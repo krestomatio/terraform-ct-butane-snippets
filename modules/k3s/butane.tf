@@ -233,32 +233,30 @@ storage:
           K3S_NODE_NAME="$(hostname -f)"
 
           export KUBECONFIG=$$${KUBECONFIG:-${local.k3s_kubelet_kubeconfig}}
-          if /usr/bin/systemctl is-active --quiet ${local.k3s_service_name}; then
-            %{~if var.shutdown.drain~}
-            already_cordoned="$(/usr/local/bin/k3s kubectl ${local.kubectl_server_option} get node "$K3S_NODE_NAME" -o jsonpath='{.spec.unschedulable}')"
-            /usr/local/bin/k3s kubectl ${local.kubectl_server_option} \
-              drain "$K3S_NODE_NAME" \
-              %{~if var.shutdown.drain_timeout != "0"~}
-              --timeout=${var.shutdown.drain_timeout} \
-              %{~endif~}
-              %{~if var.shutdown.drain_request_timeout != "0"~}
-              --request-timeout=${var.shutdown.drain_request_timeout} \
-              %{~endif~}
-              %{~if var.shutdown.drain_grace_period >= 0~}
-              --grace-period=${var.shutdown.drain_grace_period} \
-              %{~endif~}
-              %{~if var.shutdown.drain_skip_wait_for_delete_timeout > 0~}
-              --skip-wait-for-delete-timeout=${var.shutdown.drain_skip_wait_for_delete_timeout} \
-              %{~endif~}
-              --ignore-daemonsets \
-              --delete-emptydir-data \
-              --force
-            [ "$already_cordoned" = "true" ] || touch ${local.k3s_shutdown_cordon_state_file}
+          %{~if var.shutdown.drain~}
+          already_cordoned="$(/usr/local/bin/k3s kubectl ${local.kubectl_server_option} get node "$K3S_NODE_NAME" -o jsonpath='{.spec.unschedulable}')"
+          /usr/local/bin/k3s kubectl ${local.kubectl_server_option} \
+            drain "$K3S_NODE_NAME" \
+            %{~if var.shutdown.drain_timeout != "0"~}
+            --timeout=${var.shutdown.drain_timeout} \
             %{~endif~}
-            %{~if var.shutdown.killall_script~}
-            /usr/local/bin/k3s-killall.sh
+            %{~if var.shutdown.drain_request_timeout != "0"~}
+            --request-timeout=${var.shutdown.drain_request_timeout} \
             %{~endif~}
-          fi
+            %{~if var.shutdown.drain_grace_period >= 0~}
+            --grace-period=${var.shutdown.drain_grace_period} \
+            %{~endif~}
+            %{~if var.shutdown.drain_skip_wait_for_delete_timeout > 0~}
+            --skip-wait-for-delete-timeout=${var.shutdown.drain_skip_wait_for_delete_timeout} \
+            %{~endif~}
+            --ignore-daemonsets \
+            --delete-emptydir-data \
+            --force
+          [ "$already_cordoned" = "true" ] || touch ${local.k3s_shutdown_cordon_state_file}
+          %{~endif~}
+          %{~if var.shutdown.killall_script~}
+          /usr/local/bin/k3s-killall.sh
+          %{~endif~}
     - path: /usr/local/bin/k3s-uncordon-node.sh
       mode: 0754
       overwrite: true
@@ -476,12 +474,9 @@ systemd:
         [Unit]
         Description=K3s Shutdown
         DefaultDependencies=no
-        Wants=network-online.target
-        After=network-online.target
-        Wants=${local.k3s_service_name}
-        After=${local.k3s_service_name}
-        After=shutdown.target
-        Before=final.target
+        Requisite=multi-user.target
+        After=multi-user.target
+        Before=shutdown.target
         RefuseManualStart=yes
         ConditionPathExists=/usr/local/bin/k3s-shutdown.sh
 
@@ -501,7 +496,6 @@ systemd:
         Wants=network-online.target
         After=network-online.target
         After=${local.k3s_service_name}
-        Requires=${local.k3s_service_name}
         ConditionPathExists=${local.k3s_shutdown_cordon_state_file}
 
         [Service]
@@ -512,7 +506,6 @@ systemd:
         ExecStart=/bin/rm -f ${local.k3s_shutdown_cordon_state_file}
 
         [Install]
-        WantedBy=multi-user.target
         WantedBy=${local.k3s_service_name}
     %{~endif~}
     %{~if var.unit_dropin_k3s != ""~}
