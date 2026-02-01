@@ -3,7 +3,8 @@ locals {
   config = {
 
     envvars = [
-      "INSTALL_K3S_BIN_DIR=/usr/local/bin"
+      # In fedora coreos, /usr/local is a symlink to /var/usrlocal
+      "INSTALL_K3S_BIN_DIR=/var/usrlocal/bin"
     ]
     parameters = [
       "--secrets-encryption"
