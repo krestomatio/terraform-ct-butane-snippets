@@ -43,6 +43,9 @@ storage:
           %{~if local.is_server && var.oidc_sc != null~}
           /usr/local/bin/k3s-installer-service-account-key.sh
           %{~endif~}
+          %{~if var.secret_encryption_key != "" && local.is_server~}
+          /usr/local/bin/k3s-write-secret-encryption.sh
+          %{~endif~}
           %{~if !local.is_server_bootstrap~}
           /usr/local/bin/k3s-installer-wait-bootstrap-server.sh
           %{~endif~}
@@ -148,9 +151,6 @@ storage:
             sed -i "s@^K3S_NODE_NAME=.*@K3S_NODE_NAME=$K3S_NODE_NAME@" \
               /usr/local/bin/k3s-shutdown.sh /usr/local/bin/k3s-uncordon-node.sh
           fi
-          %{~if var.secret_encryption_key != "" && local.is_server~}
-          /usr/local/bin/k3s-write-secret-encryption.sh
-          %{~endif~}
 
           ${local.k3s_installer_file} ${local.is_server ? "server" : "agent"} \
             %{~if var.kubelet_config.content != ""~}
