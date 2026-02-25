@@ -461,6 +461,7 @@ storage:
     %{~if var.secret_encryption_key != "" && local.is_server~}
     - path: ${local.k3s_secret_encryption_path}
       mode: 0600
+      overwrite: true
       contents:
         inline: |
           {"kind":"EncryptionConfiguration","apiVersion":"apiserver.config.k8s.io/v1","resources":[{"resources":["secrets"],"providers":[{"aescbc":{"keys":[{"name":"aescbckey","secret":"${base64encode(var.secret_encryption_key)}"}]}},{"identity":{}}]}]}
