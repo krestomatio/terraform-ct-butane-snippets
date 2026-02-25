@@ -456,7 +456,7 @@ data "template_file" "butane_snippet_disable_zincati" {
 }
 
 data "template_file" "butane_snippet_kernel_arguments" {
-  count = length(var.kernel_arguments) != null ? 1 : 0
+  count = var.kernel_arguments != null ? 1 : 0
 
   template = <<TEMPLATE
 ---
