@@ -37,9 +37,6 @@ storage:
       contents:
         inline: |
           #!/bin/bash -eu
-          %{~if var.selinux~}
-          /usr/local/bin/k3s-installer-selinux-data-dir.sh
-          %{~endif~}
           %{~if local.is_server && var.oidc_sc != null~}
           /usr/local/bin/k3s-installer-service-account-key.sh
           %{~endif~}
@@ -523,6 +520,25 @@ systemd:
         [Install]
         WantedBy=${local.k3s_service_name}
     %{~endif~}
+    %{~if var.selinux~}
+    - name: k3s-selinux-data-dir.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=K3s SELinux Data Dir Relabel
+        ConditionPathExists=/usr/local/bin/k3s-installer-selinux-data-dir.sh
+        ConditionPathExists=!${var.data_dir}/.selinux
+        Before=${var.install_service_name}
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        TimeoutStartSec=600
+        ExecStart=/usr/local/bin/k3s-installer-selinux-data-dir.sh
+
+        [Install]
+        WantedBy=${var.install_service_name}
+    %{~endif~}
     %{~if var.unit_dropin_k3s != ""~}
     - name: ${local.k3s_service_name}
       dropins:
@@ -547,6 +563,9 @@ systemd:
         Wants=network-online.target
         After=network-online.target
         After=additional-rpms.service
+        %{~if var.selinux~}
+        After=k3s-selinux-data-dir.service
+        %{~endif~}
         %{~for after_unit in var.after_units~}
         After=${after_unit}
         %{~endfor~}
