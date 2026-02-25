@@ -52,6 +52,25 @@ storage:
           %{~if var.pre_install_script_snippet != ""~}
           ${indent(10, var.pre_install_script_snippet)}
           %{~endif~}
+    %{~if var.secret_encryption_key != "" && local.is_server~}
+    - path: /usr/local/bin/k3s-write-secret-encryption.sh
+      mode: 0700
+      overwrite: true
+      contents:
+        inline: |
+          #!/bin/bash
+          # Disable xtrace to prevent secret leaking in logs
+          { set +x; } 2>/dev/null
+
+          dest="${local.k3s_secret_encryption_path}"
+
+          if [ ! -f "$dest" ]; then
+            mkdir -p "$(dirname "$dest")"
+            # Pre-create with restricted permissions before secret is written
+            install -m 0600 /dev/null "$dest"
+            printf '%s\n' '${sensitive("{\"kind\":\"EncryptionConfiguration\",\"apiVersion\":\"apiserver.config.k8s.io/v1\",\"resources\":[{\"resources\":[\"secrets\"],\"providers\":[{\"aescbc\":{\"keys\":[{\"name\":\"aescbckey\",\"secret\":\"${base64encode(var.secret_encryption_key)}\"}]}},{\"identity\":{}}]}]}")}'  > "$dest"
+          fi
+    %{~endif~}
     - path: /usr/local/bin/install-k3s.sh
       mode: 0700
       overwrite: true
@@ -129,6 +148,9 @@ storage:
             sed -i "s@^K3S_NODE_NAME=.*@K3S_NODE_NAME=$K3S_NODE_NAME@" \
               /usr/local/bin/k3s-shutdown.sh /usr/local/bin/k3s-uncordon-node.sh
           fi
+          %{~if var.secret_encryption_key != "" && local.is_server~}
+          /usr/local/bin/k3s-write-secret-encryption.sh
+          %{~endif~}
 
           ${local.k3s_installer_file} ${local.is_server ? "server" : "agent"} \
             %{~if var.kubelet_config.content != ""~}
@@ -458,14 +480,6 @@ storage:
           gpgcheck=1
           repo_gpgcheck=0
           gpgkey=${var.testing_repo_gpgkey}
-    %{~if var.secret_encryption_key != "" && local.is_server~}
-    - path: ${local.k3s_secret_encryption_path}
-      mode: 0600
-      overwrite: true
-      contents:
-        inline: |
-          {"kind":"EncryptionConfiguration","apiVersion":"apiserver.config.k8s.io/v1","resources":[{"resources":["secrets"],"providers":[{"aescbc":{"keys":[{"name":"aescbckey","secret":"${base64encode(var.secret_encryption_key)}"}]}},{"identity":{}}]}]}
-    %{~endif~}
 systemd:
   units:
     %{~if var.shutdown.service~}
